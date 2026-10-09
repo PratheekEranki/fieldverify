@@ -8,8 +8,9 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import REPO_ROOT, settings
+from app.credence.client import get_client
 from app.db import init_db
-from app.routers import audit, providers, verify_manual, visits
+from app.routers import audit, providers, verify_digital, verify_manual, visits
 from app.seed import ensure_seeded
 
 
@@ -46,9 +47,16 @@ def health() -> dict:
     }
 
 
+@app.get("/api/credence/status")
+def credence_status() -> dict:
+    """Can the server get a Credence session right now? Uses the cached token, so it's cheap."""
+    return get_client().status()
+
+
 app.include_router(visits.router)
 app.include_router(providers.router)
 app.include_router(verify_manual.router)
+app.include_router(verify_digital.router)
 app.include_router(audit.router)
 
 # Demo/production mode: serve the built web app from the same origin as the API,

@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ApiError, api } from '../api/client'
 import type { Health, Visit } from '../api/types'
+import { DigitalPanel } from '../components/DigitalPanel'
 import { ErrorBox, Loading } from '../components/Loading'
 import { MaskedSsnInput } from '../components/MaskedSsnInput'
 import { formatTime } from './VisitList'
@@ -15,7 +16,7 @@ export function Verify() {
   const [visit, setVisit] = useState<Visit | null>(null)
   const [health, setHealth] = useState<Health | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [mode, setMode] = useState<'choose' | 'manual'>('choose')
+  const [mode, setMode] = useState<'choose' | 'manual' | 'digital'>('choose')
   const [form, setForm] = useState<Form>(EMPTY)
   const [photoChecked, setPhotoChecked] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -79,14 +80,12 @@ export function Verify() {
           <div className="choice choice-primary">
             <h2>Verify with mobile ID</h2>
             <p>The provider presents the ID in their phone wallet. Verified cryptographically by Credence ID.</p>
-            <button className="button" disabled title="Connected in the next build step">
+            <button className="button" disabled={!health?.credence_configured} onClick={() => setMode('digital')}>
               Verify with mobile ID
             </button>
-            <p className="small muted">
-              {health?.credence_configured
-                ? 'Credence Cloud SDK is configured. Wallet flow coming in the next build step.'
-                : 'Credence Cloud SDK not configured on this server yet.'}
-            </p>
+            {health && !health.credence_configured && (
+              <p className="small muted">Credence Cloud SDK is not configured on this server.</p>
+            )}
           </div>
           <div className="choice">
             <h2>Manual fallback</h2>
@@ -97,6 +96,17 @@ export function Verify() {
             <p className="small muted">Result is a record match only, never "verified".</p>
           </div>
         </div>
+      )}
+
+      {mode === 'digital' && (
+        <>
+          <DigitalPanel visitId={visit.id} onManual={() => setMode('manual')} />
+          <p>
+            <button className="link-button" onClick={() => setMode('choose')}>
+              ← Back
+            </button>
+          </p>
+        </>
       )}
 
       {mode === 'manual' && (

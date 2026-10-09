@@ -1,6 +1,9 @@
 import type {
   AuditEntry,
   ChainCheck,
+  DigitalStart,
+  DigitalStatus,
+  Flow,
   Health,
   ManualVerifyRequest,
   ProviderSearchHit,
@@ -47,6 +50,17 @@ export const api = {
   verifyManual: (body: ManualVerifyRequest) =>
     request<VerificationResult>('/api/verify/manual', { method: 'POST', body: JSON.stringify(body) }),
   result: (id: string) => request<VerificationResult>(`/api/verify/results/${id}`),
+  digitalStart: (visitId: number, flow: Flow) =>
+    request<DigitalStart>('/api/verify/digital/start', {
+      method: 'POST',
+      body: JSON.stringify({ visit_id: visitId, flow }),
+    }),
+  digitalComplete: (sessionId: string, data: string) =>
+    request<VerificationResult>('/api/verify/digital/complete', {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionId, data }),
+    }),
+  digitalStatus: (sessionId: string) => request<DigitalStatus>(`/api/verify/digital/status/${sessionId}`),
   saveToAudit: (resultId: string, notes: string) =>
     request<AuditEntry>('/api/audit', { method: 'POST', body: JSON.stringify({ result_id: resultId, notes }) }),
   audit: (filters: { mode?: string; band?: string }) => {

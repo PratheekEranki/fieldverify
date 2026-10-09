@@ -1,11 +1,22 @@
 import type { VerificationResult } from '../api/types'
 import { BandIcon, DashIcon } from './Icons'
 
+// Known Credence check names -> plain English. Unknown checks are shown with their raw name.
 const CHECK_LABELS: Record<string, string> = {
-  issuer_trusted: 'Issuer is trusted',
+  issuerTrusted: 'Issuer is in the trust list',
+  issuer_trusted: 'Issuer is in the trust list',
+  isIssuerVerified: 'Issuer is in the trust list',
+  signatureValid: 'Credential signature valid',
   signature_valid: 'Credential signature valid',
-  device_signed: 'Device signature valid',
-  not_expired: 'Credential not expired',
+  isIssuerSignedAuthenticated: 'Issuer signature valid',
+  isDeviceSignedAuthenticated: 'Device signature valid (not copied)',
+  isMsoSigned: 'Security object signed',
+  vpSignatureValid: 'Presentation signature valid',
+  vcSignatureValid: 'Credential signature valid',
+  nonceMatches: 'Fresh response (nonce matches)',
+  audienceMatches: 'Response meant for this verifier',
+  notExpired: 'Credential not expired',
+  credentialTypeMatches: 'Credential type as expected',
 }
 
 export function AuthenticityPanel({ result }: { result: VerificationResult }) {
@@ -33,6 +44,12 @@ export function AuthenticityPanel({ result }: { result: VerificationResult }) {
             ))}
           </ul>
         </>
+      )}
+      {result.portrait_data_url && (
+        <figure className="portrait">
+          <img src={result.portrait_data_url} alt="Portrait from the mobile ID" />
+          <figcaption className="small">Photo from the credential. Compare it to the person in front of you.</figcaption>
+        </figure>
       )}
       {result.photo_checked && <p className="small">Auditor confirmed the ID photo matches the person present.</p>}
     </section>

@@ -233,6 +233,18 @@ Confirmed from the public docs (Oct 9 2026):
   DCQL query and **not yet confirmed** in docs.
 - **Cancellation:** flows A/B return HTTP 200 with `cancelled: true`. Consent denial in C returns `success: false`.
 
+Observed live (Oct 9, `backend/tests/fixtures/`):
+- `/v1/getDocRequest` → 201 `{sessionId, dcRequest: {deviceRequest, encryptionInfo}}`.
+- `/dcapi/openid4vp/v1/initiate` → 200 `{sessionId, payload}`; `payload` is the **unsigned** OpenID4VP request object
+  (`response_mode: dc_api.jwt`, `dcql_query`, `client_metadata.jwks`), handed to the browser as-is.
+- `/openid4vp/v1/mdoc/initiate` → 200 `{sessionId, walletUri: "mdoc-openid4vp://?client_id=credenceid.com&...",
+  requestUri}`; polling `/openid4vp/v1/mdoc/result` before a scan → **202 `{"status":"pending"}`**.
+- **Requested claims come from the profile, not the request.** The default "Age Check Profile 2.0" asks for
+  mDL `issuing_authority` + `portrait`, or AAMVA `DCS` (last name), `DAC` (first), `DAD` (middle), `DBB` (DOB),
+  `DAJ` (state). Our scoring needs `given_name`, `family_name`, `birth_date` → a custom profile is required (T13).
+- AAMVA element mapping used by the parser: `DCS→family_name`, `DAC→given_name`, `DBB→birth_date`
+  (US format MMDDCCYY), `DAJ→issuing state`.
+
 Mapping to our `authenticity`:
 - A/B: `res == true` → `verified`; else `failed`. Parse whatever per-check detail `resDetails` exposes into `auth_checks`.
 - C: `success == true` → `verified`.
@@ -334,7 +346,7 @@ These are **not questions for the human**. Each is answered by a specific task, 
 | 1 | Which Cloud SDK flow works with the candidate's wallet ID | T13 spike | _pending_ |
 | 2 | Correct base URL: `/cloudsdk/playground` vs `/cloudsdkdev` | T12b | **`https://credenceid.com/cloudsdk/playground`** (Oct 9: `/v1/setup` → 200 with tokens, `expiresIn` 900 s; `/cloudsdkdev` → 401 INVALID_LICENSE_KEY). |
 | 3 | Does the portal accept `localhost` as the registered domain, or is a tunnel needed from day one | T12 | **No.** Portal requires a real hostname ("Domain must be a valid hostname (e.g. https://yourapp.com)"). Decision: Render free deploy (see §8). |
-| 4 | Are requested claims (portrait, address) set per request or on the reader profile | T13 | Partly answered Oct 9: claims appear to come from a named **profile** attached to the license (ours defaulted to "Age Check Profile 2.0"). Need a custom profile with name + DOB. |
+| 4 | Are requested claims (portrait, address) set per request or on the reader profile | T13 | **On the profile** (Oct 9: initiate calls take no claims; the returned DCQL query reflects the profile). Need a custom profile with given/family name + birth date. |
 | 5 | What `resDetails` contains for flows A/B | T13 fixture | _pending_ |
 | 6 | Does the wallet ID present to the Tap2iD sample app on Android | A1 | _pending_ |
 | 7 | Which `SdkConfig` signature the 2.0.0 artifact really has, and what's in `MdocAttributes` | A2 | _pending_ |

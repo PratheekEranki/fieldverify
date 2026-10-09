@@ -55,8 +55,21 @@ export type VerificationResult = {
   outcome: { label: string; color: Band }
   photo_checked: boolean | null
   presented_ssn_masked: string | null
+  portrait_data_url: string | null
   saved: boolean
 }
+
+export type Flow = 'A' | 'B' | 'C'
+
+export type DigitalStart = {
+  session_id: string
+  flow: Flow
+  // A/B: what navigator.credentials.get needs. C: the QR / deep link for a phone wallet.
+  browser: { protocol?: string; request?: unknown; wallet_uri?: string; request_uri?: string }
+  expires_in: number
+}
+
+export type DigitalStatus = { status: 'pending' | 'done'; result: VerificationResult | null }
 
 export type ManualVerifyRequest = {
   visit_id: number

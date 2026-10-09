@@ -1,0 +1,5 @@
+{
+  "sessionId": "00000000-0000-0000-0000-00000000000c",
+  "walletUri": "mdoc-openid4vp://?client_id=credenceid.com&...",
+  "requestUri": "https://credenceid.com/cloudsdk/playground/openid4vp/v1/mdoc/request/00000000-0000-0000-0000-00000000000c"
+}

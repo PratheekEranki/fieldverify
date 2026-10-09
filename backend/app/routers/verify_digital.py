@@ -1,0 +1,156 @@
+"""Digital verification: the provider presents a wallet ID, Credence verifies it, we score it against the record.
+
+Flows A/B (DC API): start -> browser calls navigator.credentials.get -> complete.
+Flow C (QR / deep link): start -> browser shows a QR code -> poll status until the wallet answers.
+Claims are never logged. The portrait is held only in the in-memory result, never in the audit log.
+"""
+import threading
+import time
+import uuid
+from datetime import datetime, timezone
+
+import httpx
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlmodel import Session
+
+from app import results
+from app.credence import flows
+from app.credence.client import CredenceError, get_client
+from app.credence.parse import DigitalOutcome
+from app.db import get_session
+from app.models import Provider, Visit
+from app.routers.verify_manual import load_visit_and_provider, match_out, record_view
+from app.routers.visits import provider_summary
+from app.schemas import AuthenticityOut, OutcomeOut, VerificationResult
+from app.scoring.engine import Presented, outcome_for, score_identity
+
+router = APIRouter(prefix="/api/verify/digital", tags=["verify"])
+
+SESSION_TTL_SECONDS = 600
+_sessions: dict[str, tuple[float, str, int]] = {}  # credence session id -> (expires, flow, visit_id)
+_lock = threading.Lock()
+
+
+class StartRequest(BaseModel):
+    visit_id: int
+    flow: str = Field(pattern="^[ABC]$")
+
+
+class StartResponse(BaseModel):
+    session_id: str
+    flow: str
+    browser: dict
+    expires_in: int
+
+
+class CompleteRequest(BaseModel):
+    session_id: str
+    data: str = Field(min_length=1, max_length=200_000)
+
+
+class StatusResponse(BaseModel):
+    status: str  # pending / done
+    result: VerificationResult | None = None
+
+
+def _credence_failure(e: Exception) -> HTTPException:
+    if isinstance(e, CredenceError):
+        if e.code == "NOT_CONFIGURED":
+            return HTTPException(503, detail={"code": "credence_not_configured", "message": e.message})
+        return HTTPException(502, detail={"code": "credence_error", "message": f"Credence: {e.message} ({e.code})"})
+    return HTTPException(502, detail={"code": "credence_unreachable", "message": "Could not reach Credence ID."})
+
+
+def _remember(session_id: str, flow: str, visit_id: int) -> None:
+    with _lock:
+        now = time.monotonic()
+        for key in [k for k, (exp, _, _) in _sessions.items() if exp < now]:
+            del _sessions[key]
+        _sessions[session_id] = (now + SESSION_TTL_SECONDS, flow, visit_id)
+
+
+def _lookup(session_id: str) -> tuple[str, int]:
+    with _lock:
+        item = _sessions.get(session_id)
+    if not item or item[0] < time.monotonic():
+        raise HTTPException(404, detail={"code": "session_not_found",
+                                         "message": "This verification session expired. Start again."})
+    return item[1], item[2]
+
+
+def _forget(session_id: str) -> None:
+    with _lock:
+        _sessions.pop(session_id, None)
+
+
+def build_digital_result(visit: Visit, provider: Provider, flow: str, outcome: DigitalOutcome,
+                         channel: str = "web") -> VerificationResult:
+    presented = Presented(first_name=outcome.first_name, last_name=outcome.last_name, dob=outcome.dob)
+    match = score_identity(presented, record_view(provider))
+    authenticity = "verified" if outcome.status == "verified" else "failed"
+    label, color = outcome_for("digital", authenticity, match.band)
+    result = VerificationResult(
+        id=str(uuid.uuid4()),
+        created_at=datetime.now(timezone.utc),
+        visit_id=visit.id,
+        visit_type=visit.visit_type,
+        provider=provider_summary(provider),
+        mode="digital",
+        channel=channel,
+        flow=flow,
+        authenticity=AuthenticityOut(status=authenticity, checks=outcome.checks, issuer=outcome.issuer),
+        match=match_out(match),
+        outcome=OutcomeOut(label=label, color=color),
+        portrait_data_url=outcome.portrait_data_url,
+    )
+    results.put(result)
+    return result
+
+
+def _finish(session_id: str, flow: str, visit_id: int, outcome: DigitalOutcome,
+            session: Session) -> VerificationResult:
+    _forget(session_id)
+    if outcome.status == "cancelled":
+        raise HTTPException(409, detail={"code": "wallet_cancelled",
+                                         "message": outcome.message or "The provider cancelled in their wallet."})
+    visit, provider = load_visit_and_provider(session, visit_id)
+    return build_digital_result(visit, provider, flow, outcome)
+
+
+@router.post("/start", response_model=StartResponse)
+def start(body: StartRequest, session: Session = Depends(get_session)) -> StartResponse:
+    load_visit_and_provider(session, body.visit_id)  # 404 early if the visit doesn't exist
+    try:
+        started = flows.start(get_client(), body.flow)
+    except (CredenceError, httpx.HTTPError) as e:
+        raise _credence_failure(e) from e
+    _remember(started["session_id"], body.flow, body.visit_id)
+    return StartResponse(session_id=started["session_id"], flow=body.flow, browser=started["browser"],
+                         expires_in=SESSION_TTL_SECONDS)
+
+
+@router.post("/complete", response_model=VerificationResult)
+def complete(body: CompleteRequest, session: Session = Depends(get_session)) -> VerificationResult:
+    flow, visit_id = _lookup(body.session_id)
+    if flow not in ("A", "B"):
+        raise HTTPException(400, detail={"code": "wrong_flow", "message": "This session is polled, not completed."})
+    try:
+        outcome = flows.complete(get_client(), flow, body.session_id, body.data)
+    except (CredenceError, httpx.HTTPError) as e:
+        raise _credence_failure(e) from e
+    return _finish(body.session_id, flow, visit_id, outcome, session)
+
+
+@router.get("/status/{session_id}", response_model=StatusResponse)
+def status(session_id: str, session: Session = Depends(get_session)) -> StatusResponse:
+    flow, visit_id = _lookup(session_id)
+    if flow != "C":
+        raise HTTPException(400, detail={"code": "wrong_flow", "message": "This session is completed, not polled."})
+    try:
+        outcome = flows.poll(get_client(), session_id)
+    except (CredenceError, httpx.HTTPError) as e:
+        raise _credence_failure(e) from e
+    if outcome is None:
+        return StatusResponse(status="pending")
+    return StatusResponse(status="done", result=_finish(session_id, flow, visit_id, outcome, session))

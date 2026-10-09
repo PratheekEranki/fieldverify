@@ -115,22 +115,22 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
     Android phone (Android 10+, NFC). Tap the wallet ID.
   - Acceptance: write the result into architecture §9 #6. **Pass = Phase 4 is possible. Fail = no Android.**
 
-- [ ] **T14 Credence client** (S) — depends T12b
+- [x] **T14 Credence client** (S) — depends T12b
   - `credence/client.py`: setup, cached token, refresh at < 60 s, re-setup on refresh failure, Origin header.
     Tests with `httpx.MockTransport`.
   - Acceptance: (1) `/api/health` shows `credence: ok` with real creds; (2) refresh path tested.
 
-- [ ] **T15 Digital verify API (flow from T13)** (M) — depends T13, T14, T07
+- [x] **T15 Digital verify API (flows A, B, C built; parser written against documented shapes + live initiate fixtures — re-check against the first real wallet response in T13/T16)** (M) — depends T13, T14, T07
   - Endpoints per architecture §4; `parse.py` written against the T13 fixture; claims → scoring input; authenticity
     mapping per architecture §5.
   - Acceptance: (1) fixture test → `authenticity.status == "verified"` + a score; (2) cancelled/denied fixture → clean
     error code, not a 500.
 
-- [ ] **T16 🧑 Web wallet flow** (M) — depends T15
+- [ ] **T16 🧑 Web wallet flow** — UI built and browser-checked with stubbed Credence responses (QR panel, polling, result with portrait). Remaining: real wallet test. (M) — depends T15
   - `wallet/dcapi.ts` or `QrPanel` + `polling.ts`, depending on the flow. Human presents the real wallet ID.
   - Acceptance: (1) real wallet → green "Verified: cryptographic + record match", 3× in a row.
 
-- [ ] **T17 Digital error paths** (S) — depends T16
+- [x] **T17 Digital error paths** (cancel/deny → 409 → "Use manual fallback"; 90 s QR timeout; unsupported browser hides DC API buttons; Credence errors → 502 with code) (S) — depends T16
   - Cancel, deny, 90 s timeout, SDK/network error, unsupported browser → plain message + "Use manual fallback" on the
     same visit. Add each real problem hit so far to `docs/customer/troubleshooting.md`.
   - Acceptance: (1) each path checked once and listed in the commit message.
