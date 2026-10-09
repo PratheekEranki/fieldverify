@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import REPO_ROOT, settings
 from app.db import init_db
-from app.routers import audit, verify_manual, visits
+from app.routers import audit, providers, verify_manual, visits
 from app.seed import ensure_seeded
 
 
@@ -47,6 +47,7 @@ def health() -> dict:
 
 
 app.include_router(visits.router)
+app.include_router(providers.router)
 app.include_router(verify_manual.router)
 app.include_router(audit.router)
 

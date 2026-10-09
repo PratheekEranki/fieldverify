@@ -43,3 +43,19 @@ def test_seed_contains_deliberate_test_cases():
 
 def test_make_npi_is_ten_digits():
     assert len(make_npi("100000037")) == 10
+
+
+def test_stale_schema_is_rebuilt(tmp_path, monkeypatch):
+    """An old local database missing a new column is rebuilt instead of crashing on startup."""
+    from sqlalchemy import create_engine, text
+
+    import app.db as db
+
+    old = create_engine(f"sqlite:///{tmp_path}/old.db")
+    with old.begin() as conn:
+        conn.execute(text("CREATE TABLE visit (id INTEGER PRIMARY KEY, provider_id INTEGER, scheduled_at DATETIME, "
+                          "site_address VARCHAR, status VARCHAR)"))
+    monkeypatch.setattr(db, "engine", old)
+    assert db._schema_is_stale()
+    db.init_db()
+    assert not db._schema_is_stale()

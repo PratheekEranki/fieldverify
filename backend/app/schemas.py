@@ -19,7 +19,19 @@ class VisitOut(BaseModel):
     scheduled_at: datetime
     site_address: str
     status: str
+    visit_type: str
     provider: ProviderSummary
+
+
+class ProviderSearchHit(BaseModel):
+    """Lookup result: public directory-style fields only (NPI data is public nationally). Never DOB or SSN."""
+
+    provider: ProviderSummary
+    practice_address: str
+
+
+class UnscheduledVisitRequest(BaseModel):
+    provider_id: int
 
 
 class ManualVerifyRequest(BaseModel):
@@ -66,6 +78,7 @@ class VerificationResult(BaseModel):
     id: str
     created_at: datetime
     visit_id: int
+    visit_type: str = "scheduled"
     provider: ProviderSummary
     mode: str  # digital / manual
     channel: str  # web / android

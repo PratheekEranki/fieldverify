@@ -64,7 +64,10 @@ export function Verify() {
         <Link to="/">← Today's visits</Link>
       </p>
       <div className="page-head">
-        <h1>{visit.provider.name}</h1>
+        <h1>
+          {visit.provider.name}
+          {visit.visit_type === 'unscheduled' && <span className="tag">Unscheduled visit</span>}
+        </h1>
         <p className="muted">
           {formatTime(visit.scheduled_at)} · {visit.provider.specialty} · NPI {visit.provider.npi} ·{' '}
           {visit.site_address}

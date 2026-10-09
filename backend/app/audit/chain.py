@@ -12,8 +12,8 @@ GENESIS = "0" * 64
 
 # Fields covered by the hash. id and the hashes themselves are excluded (id is assigned by the DB after hashing).
 HASHED_FIELDS = (
-    "created_at", "auditor", "visit_id", "provider_id", "mode", "channel", "flow", "authenticity", "auth_checks",
-    "issuer", "score", "band", "outcome", "field_results", "photo_checked", "notes",
+    "created_at", "auditor", "visit_id", "visit_type", "provider_id", "mode", "channel", "flow", "authenticity",
+    "auth_checks", "issuer", "score", "band", "outcome", "field_results", "photo_checked", "notes",
 )
 
 

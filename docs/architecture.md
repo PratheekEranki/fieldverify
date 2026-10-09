@@ -137,6 +137,7 @@ Visit
   scheduled_at  datetime
   site_address  str
   status        str       # scheduled / completed
+  visit_type    str       # scheduled / unscheduled
 
 AuditEntry          # append-only; no UPDATE or DELETE route exists
   id            int PK
@@ -144,6 +145,7 @@ AuditEntry          # append-only; no UPDATE or DELETE route exists
   auditor       str
   visit_id      FK Visit
   provider_id   FK Provider
+  visit_type    str       # scheduled / unscheduled (hashed)
   mode          str       # digital / manual
   channel       str       # web / android
   flow          str|null  # A/B/C/D (Cloud SDK) or tap2id
@@ -170,6 +172,8 @@ All under `/api`. JSON. Errors use `{"error": {"code": "...", "message": "..."}}
 |---|---|---|
 | GET | `/api/visits?date=today` | Today's visits with provider summary (no SSN, no DOB) |
 | GET | `/api/visits/{id}` | One visit + provider summary |
+| GET | `/api/providers/search?q=` | Unscheduled visits: NPI prefix (≥ 4 digits) or name words (≥ 2 letters). Never DOB/SSN |
+| POST | `/api/visits/unscheduled` | Body: `provider_id`. Creates a visit for now with `visit_type = unscheduled` |
 | POST | `/api/verify/manual` | Body: `visit_id`, fields, `photo_checked`. Returns `VerificationResult` (not saved yet) |
 | GET | `/api/verify/results/{id}` | Re-fetch a held (unexpired) result, e.g. after a browser refresh |
 | POST | `/api/verify/digital/start` | Body: `visit_id`, `flow`. Calls Credence initiate. Returns what the browser needs (DC API request payload, or QR URI + `session_id`) |

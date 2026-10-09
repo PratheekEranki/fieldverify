@@ -3,6 +3,7 @@ import type {
   ChainCheck,
   Health,
   ManualVerifyRequest,
+  ProviderSearchHit,
   VerificationResult,
   Visit,
 } from './types'
@@ -39,6 +40,10 @@ export const api = {
   health: () => request<Health>('/api/health'),
   visits: () => request<Visit[]>('/api/visits'),
   visit: (id: number) => request<Visit>(`/api/visits/${id}`),
+  searchProviders: (q: string) =>
+    request<ProviderSearchHit[]>(`/api/providers/search?${new URLSearchParams({ q })}`),
+  startUnscheduledVisit: (providerId: number) =>
+    request<Visit>('/api/visits/unscheduled', { method: 'POST', body: JSON.stringify({ provider_id: providerId }) }),
   verifyManual: (body: ManualVerifyRequest) =>
     request<VerificationResult>('/api/verify/manual', { method: 'POST', body: JSON.stringify(body) }),
   result: (id: string) => request<VerificationResult>(`/api/verify/results/${id}`),

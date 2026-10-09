@@ -20,9 +20,14 @@ export function VisitList() {
 
   return (
     <>
-      <div className="page-head">
-        <h1>Today's site visits</h1>
-        <p className="muted">{today} · Medicaid provider enrollment site visits</p>
+      <div className="page-head page-head-row">
+        <div>
+          <h1>Today's site visits</h1>
+          <p className="muted">{today} · Medicaid provider enrollment site visits</p>
+        </div>
+        <Link className="button button-secondary" to="/lookup">
+          + Unscheduled visit
+        </Link>
       </div>
       {error && <ErrorBox message={error} />}
       {!visits && !error && <Loading />}
@@ -32,7 +37,10 @@ export function VisitList() {
           <li key={v.id} className="visit">
             <div className="visit-time">{formatTime(v.scheduled_at)}</div>
             <div className="visit-main">
-              <div className="visit-name">{v.provider.name}</div>
+              <div className="visit-name">
+                {v.provider.name}
+                {v.visit_type === 'unscheduled' && <span className="tag">Unscheduled</span>}
+              </div>
               <div className="small muted">
                 {v.provider.specialty} · NPI {v.provider.npi}
               </div>

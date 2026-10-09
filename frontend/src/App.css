@@ -40,6 +40,13 @@
 .note-red { background: var(--red-bg); color: var(--red); }
 
 /* Visit list */
+.page-head-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.tag { display: inline-block; margin-left: 8px; font-size: .72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; background: #e8eef5; color: var(--primary);
+  vertical-align: middle; }
+.search-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.search-row input { flex: 1; }
+.visit.visit-hit { grid-template-columns: 1fr auto; }
 .visit-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
 .visit { display: grid; grid-template-columns: 80px 1fr auto; gap: 16px; align-items: center; background: var(--surface);
   border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; }
@@ -104,6 +111,7 @@
 
 /* Tablet and below */
 @media (max-width: 820px) {
+  .visit.visit-hit { grid-template-columns: 1fr; }
   .choice-grid, .two-col, .detail { grid-template-columns: 1fr; }
   .visit { grid-template-columns: 1fr; gap: 8px; }
   .visit-side { flex-direction: row; justify-content: space-between; align-items: center; }

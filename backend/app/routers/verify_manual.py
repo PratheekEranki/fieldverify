@@ -64,6 +64,7 @@ def verify_manual(body: ManualVerifyRequest, session: Session = Depends(get_sess
         id=str(uuid.uuid4()),
         created_at=datetime.now(timezone.utc),
         visit_id=visit.id,
+        visit_type=visit.visit_type,
         provider=provider_summary(provider),
         mode="manual",
         channel="web",

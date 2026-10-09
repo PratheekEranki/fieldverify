@@ -90,6 +90,9 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
   - Acceptance: (1) `CREDENCE_LICENSE_KEY`, `CREDENCE_PROFILE_ID`, `CREDENCE_ORIGIN` set; (2) a `/v1/setup` call from
     localhost with that Origin returns tokens.
 
+- [x] **T11b Unscheduled visit: provider lookup** (M) — added Oct 9 at the human's request. Search by NPI/name only,
+  `visit_type` on visits + audit entries (hashed), schema auto-rebuild for the demo DB. 54 tests; browser-checked.
+
 **Checkpoint A — reached Fri Oct 9** (47 backend tests; browser flow checked at 1280 px and 768 px): on localhost, pick a visit → manual verify → result → saved → shows in the audit log → chain OK.
 
 ---

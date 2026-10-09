@@ -53,6 +53,16 @@ Priority: **P0** = must work in the demo. **P1** = should have, makes the pitch 
 - Selecting one opens the verification screen for **that provider's enrollment record** (1:1 verification, not a search
   across all providers).
 
+### F1b — Unscheduled visit: provider lookup (P0, added Oct 9)
+- "+ Unscheduled visit" on the visit list → search enrolled providers by **NPI (≥ 4 digits) or name (≥ 2 letters)**.
+- Search never reads or returns DOB or SSN; digits are only ever matched against NPI. A query mixing letters and digits
+  is rejected. Max 10 results.
+- "Start visit" creates a visit for now (`visit_type = unscheduled`) and opens the normal verify screen. Verification
+  stays 1:1 against the chosen record. The audit entry records `visit_type` (covered by the hash chain).
+- Data source: our enrollment records (the stand-in for the state system). **Credence is not involved**: it verifies
+  credentials, it has no provider or person database.
+- Adding a provider who isn't enrolled is out of scope (enrollment belongs to the state system).
+
 ### F2 — Digital verification via Credence Cloud SDK (P0)
 - Button "Verify with mobile ID".
 - Backend starts a Cloud SDK session; frontend runs the wallet flow (DC API prompt, or QR for cross-device flows).

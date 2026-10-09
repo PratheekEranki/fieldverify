@@ -94,6 +94,7 @@ export function AuditLog() {
                     <td>{new Date(e.created_at + (e.created_at.endsWith('Z') ? '' : 'Z')).toLocaleString()}</td>
                     <td>
                       {e.provider_name}
+                      {e.visit_type === 'unscheduled' && <span className="tag">Unscheduled</span>}
                       <div className="small muted">NPI {e.provider_npi}</div>
                     </td>
                     <td>{e.mode === 'digital' ? `Mobile ID (${e.channel})` : 'Manual'}</td>

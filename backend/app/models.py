@@ -35,6 +35,7 @@ class Visit(SQLModel, table=True):
     scheduled_at: NaiveDatetime  # local wall-clock schedule time, deliberately timezone-free
     site_address: str
     status: str = "scheduled"  # scheduled / completed
+    visit_type: str = "scheduled"  # scheduled / unscheduled (auditor looked the provider up on site)
 
 
 class AuditEntry(SQLModel, table=True):
@@ -45,6 +46,7 @@ class AuditEntry(SQLModel, table=True):
     auditor: str
     visit_id: int = Field(foreign_key="visit.id")
     provider_id: int = Field(foreign_key="provider.id")
+    visit_type: str = "scheduled"  # scheduled / unscheduled
     mode: str  # digital / manual
     channel: str  # web / android
     flow: str | None = None  # A/B/C/D or tap2id

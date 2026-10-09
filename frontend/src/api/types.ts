@@ -13,7 +13,13 @@ export type Visit = {
   scheduled_at: string
   site_address: string
   status: string
+  visit_type: 'scheduled' | 'unscheduled'
   provider: ProviderSummary
+}
+
+export type ProviderSearchHit = {
+  provider: ProviderSummary
+  practice_address: string
 }
 
 export type FieldResultValue = 'match' | 'partial' | 'no_match' | 'not_provided'
@@ -31,6 +37,7 @@ export type VerificationResult = {
   id: string
   created_at: string
   visit_id: number
+  visit_type: 'scheduled' | 'unscheduled'
   provider: ProviderSummary
   mode: 'digital' | 'manual'
   channel: 'web' | 'android'
@@ -67,6 +74,7 @@ export type AuditEntry = {
   created_at: string
   auditor: string
   visit_id: number
+  visit_type: 'scheduled' | 'unscheduled'
   provider_name: string
   provider_npi: string
   mode: 'digital' | 'manual'
