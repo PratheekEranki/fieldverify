@@ -1,0 +1,32 @@
+# secrets and private notes
+.env
+_private/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# data
+*.db
+*.sqlite
+
+# node
+node_modules/
+dist/
+
+# os / editors
+.DS_Store
+Thumbs.db
+.vscode/
+
+# android
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
+android/.idea/
+*.apk
