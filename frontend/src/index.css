@@ -1,8 +1,32 @@
 :root {
-  --bg: #f6f7f9; --surface: #ffffff; --text: #1b1f24; --muted: #5b6470; --border: #d8dde3;
-  --good: #1a7f37; --warn: #9a6700; --bad: #cf222e;
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --text: #17202a;
+  --muted: #5b6672;
+  --border: #d5dbe1;
+  --primary: #1f4e79;
+  --primary-hover: #173d60;
+  --green: #1a7f37;
+  --green-bg: #e9f6ec;
+  --yellow: #8a5a00;
+  --yellow-bg: #fff6dd;
+  --red: #b42318;
+  --red-bg: #fdecea;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  color: var(--text); background: var(--bg);
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--bg);
 }
+* { box-sizing: border-box; }
 body { margin: 0; }
-h1 { margin-bottom: 4px; }
+h1 { font-size: 1.6rem; margin: 0 0 4px; }
+h2 { font-size: 1.2rem; margin: 0 0 8px; }
+h3 { font-size: 1.05rem; margin: 0 0 4px; }
+a { color: var(--primary); }
+input, select, textarea {
+  font: inherit; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; width: 100%;
+}
+input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible {
+  outline: 3px solid #9cc3e6; outline-offset: 1px;
+}

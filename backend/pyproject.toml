@@ -3,5 +3,10 @@ testpaths = ["tests"]
 pythonpath = ["."]
 
 [tool.ruff]
-line-length = 110
+line-length = 120
 target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+# B008: FastAPI's Depends() in default arguments is the documented idiom.
+ignore = ["B008"]

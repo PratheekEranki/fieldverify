@@ -116,8 +116,8 @@ md, do), expand common street abbreviations (st→street, ave→avenue, rd→roa
 
 | Field | Weight | Full | Partial | None |
 |---|---|---|---|---|
-| Last name | 20 | Jaro-Winkler ≥ 0.96 after normalization, or matches any recorded alias / maiden name | JW ≥ 0.88 → 50% | otherwise |
-| First name | 10 | JW ≥ 0.96, or nickname-table equivalent (Bob ↔ Robert) | JW ≥ 0.88 → 50% | otherwise |
+| Last name | 20 | exact after normalization, or matches a recorded alias / maiden name | Jaro-Winkler ≥ 0.88 (typo), or matches one part of a hyphenated name → 50% | otherwise |
+| First name | 10 | exact after normalization, or nickname-table equivalent (Bob ↔ Robert) | Jaro-Winkler ≥ 0.88 → 50% | otherwise |
 | Date of birth | 25 | exact | day/month swapped, **or** one digit differs → 50% | otherwise |
 | SSN | 30 | exact (9 digits) | one adjacent-digit transposition → 40% | otherwise |
 | Address | 15 | ZIP5 equal **and** house number equal | ZIP5 equal only → 50% | otherwise |
@@ -130,7 +130,16 @@ A result with **fewer than 50 weight points provided** is capped at yellow ("ins
 - DOB `no_match` **and** SSN `no_match` → red.
 - Last name `no_match` and first name `no_match` → red.
 
+**Caps** (can only lower green to yellow):
+- Fewer than 50 weight points provided ("insufficient data").
+- DOB or SSN is `partial` (added Oct 9): a key-identifier discrepancy always gets a human follow-up. Without this, a
+  swapped day/month with everything else exact scores 87.5 = green.
+
 **Bands:** green ≥ 85, yellow 60–84, red < 60.
+
+*Why exact-only for full name credit (decided Oct 9, from measured scores):* Jaro-Winkler rates Robert/Roberta 0.971
+and Chen/Cheng 0.960, which are different people, while real typos (Jonson/Johnson 0.962, Smith/Smyth 0.893) land in
+the same range. No threshold separates them, so a near-miss is always partial credit. "A typo never earns full credit." 
 
 Every rule outcome carries a human-readable reason string, used on the result screen and in the pitch.
 

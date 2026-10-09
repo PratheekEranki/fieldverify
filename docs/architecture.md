@@ -171,6 +171,7 @@ All under `/api`. JSON. Errors use `{"error": {"code": "...", "message": "..."}}
 | GET | `/api/visits?date=today` | Today's visits with provider summary (no SSN, no DOB) |
 | GET | `/api/visits/{id}` | One visit + provider summary |
 | POST | `/api/verify/manual` | Body: `visit_id`, fields, `photo_checked`. Returns `VerificationResult` (not saved yet) |
+| GET | `/api/verify/results/{id}` | Re-fetch a held (unexpired) result, e.g. after a browser refresh |
 | POST | `/api/verify/digital/start` | Body: `visit_id`, `flow`. Calls Credence initiate. Returns what the browser needs (DC API request payload, or QR URI + `session_id`) |
 | POST | `/api/verify/digital/complete` | Body: `session_id`, plus the browser's DC API response for flows A/B. Validates with Credence, scores, returns `VerificationResult` |
 | GET | `/api/verify/digital/status/{session_id}` | For QR flows C/D: polls Credence; returns `pending` or `VerificationResult` |

@@ -22,31 +22,31 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
   - Acceptance: (1) `/api/health` returns ok; (2) the Vite page calls it and shows "ok"; (3) `git status` shows no
     `.env` or `_private/`.
 
-- [ ] **T03 Models + seed** (M) — depends T02
+- [x] **T03 Models + seed** (M) — depends T02
   - `models.py` per architecture §3 (including `channel`). `python -m app.seed`: 15 fake providers + 6 visits today.
   - Deliberate test cases: maiden-name alias, a "Robert" (for Bob), a hyphenated last name, an apartment address.
   - Demo provider from `DEMO_PROVIDER_*` in `.env` if set (ADR-0004).
   - Acceptance: (1) idempotent; (2) every SSN starts with 9; (3) every NPI is 10 digits and passes the NPI Luhn check.
 
-- [ ] **T04 Scoring: normalization** (S) — test-first
+- [x] **T04 Scoring: normalization** (S) — test-first
   - Acceptance: tests pass for "O'Brien"→"obrien", "José"→"jose", "Smith Jr., MD"→"smith",
     "123 N Main St."→"123 n main street".
 
-- [ ] **T05 Scoring: names** (S) — depends T04, test-first
+- [x] **T05 Scoring: names** (S) — depends T04, test-first
   - Jaro-Winkler thresholds (spec §5), last-name aliases, `nicknames.py` (~40 pairs).
   - Acceptance: (1) Robert/Bob = match; (2) Jonson/Johnson = partial; (3) alias "Garcia" matches.
 
-- [ ] **T06 Scoring: DOB, SSN, address** (S) — test-first
+- [x] **T06 Scoring: DOB, SSN, address** (S) — test-first
   - Acceptance: (1) 1985-03-07 vs 1985-07-03 = partial; (2) 900123456 vs 900213456 = partial; (3) every result has a
     reason string.
 
-- [ ] **T07 Scoring: engine** (S) — depends T05, T06, test-first
+- [x] **T07 Scoring: engine** (S) — depends T05, T06, test-first
   - Weights, `not_provided` renormalization, < 50 provided points → yellow cap, hard rules, bands, outcome labels
     (spec §3, both modes).
   - Acceptance: (1) all exact = 100 green; (2) DOB + SSN both wrong = red; (3) names + DOB only scores out of 55 and can
     reach green.
 
-- [ ] **T08 Manual verify API** (M) — depends T03, T07
+- [x] **T08 Manual verify API** (M) — depends T03, T07
   - `GET /api/visits`, `GET /api/visits/{id}`, `POST /api/verify/manual`; in-memory result cache (15 min TTL);
     SSN never logged.
   - Five scripted cases in `test_api_manual.py`:
@@ -57,18 +57,18 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
     5. Last name + DOB only → yellow (insufficient data)
   - Acceptance: (1) five cases pass; (2) no response contains a full SSN.
 
-- [ ] **T09 Audit log API** (M) — depends T08
+- [x] **T09 Audit log API** (M) — depends T08
   - `POST /api/audit` by result id + notes; `GET /api/audit` with mode/band filters; `GET /api/audit/export.csv`.
     No update or delete routes.
   - Acceptance: (1) saved row has no raw SSN/DOB; (2) CSV opens in Excel; (3) a test asserts no PUT/PATCH/DELETE route
     exists under `/api/audit`.
 
-- [ ] **T10 Hash chain** (S) — depends T09, test-first
+- [x] **T10 Hash chain** (S) — depends T09, test-first
   - Canonical JSON (sorted keys, no whitespace); `entry_hash = sha256(prev_hash + json)`; genesis `"0"*64`;
     `GET /api/audit/verify-chain`.
   - Acceptance: (1) a test that edits a stored field directly in SQLite makes verification fail at that row.
 
-- [ ] **T11 Web UI: visits, manual verify, result, audit log** (M) — depends T08–T10
+- [x] **T11 Web UI: visits, manual verify, result, audit log** (M) — depends T08–T10
   - Pages `VisitList`, `Verify` (manual parts), `Result`, `AuditLog`. `MaskedInput` for SSN; required photo-check box;
     `OutcomeBanner`, `AuthenticityPanel` ("Not checked: manual mode"), `MatchTable`; "Verify chain" + "Export CSV".
   - Acceptance: (1) scripted case 3 shows yellow with the swap reason; (2) submit is disabled until the photo box is
@@ -90,7 +90,7 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
   - Acceptance: (1) `CREDENCE_LICENSE_KEY`, `CREDENCE_PROFILE_ID`, `CREDENCE_ORIGIN` set; (2) a `/v1/setup` call from
     localhost with that Origin returns tokens.
 
-**Checkpoint A**: on localhost, pick a visit → manual verify → result → saved → shows in the audit log → chain OK.
+**Checkpoint A — reached Fri Oct 9** (47 backend tests; browser flow checked at 1280 px and 768 px): on localhost, pick a visit → manual verify → result → saved → shows in the audit log → chain OK.
 
 ---
 
