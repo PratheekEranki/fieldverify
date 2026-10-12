@@ -5,6 +5,19 @@ IT team would need them: **symptom → cause → fix**. Newest first.
 
 ---
 
+### Wallet says "your info is not found" after scanning the QR code
+- **Symptom:** the provider scans FieldVerify's QR code; the wallet opens the request, then reports it has no
+  matching information. FieldVerify keeps waiting until the 90-second timeout.
+- **Cause:** the wallet holds no credential of the requested type. Decoding the request object (`GET` the
+  `request_uri` → ES256-signed JWT) shows the default "Age Check Profile 2.0" asks only for
+  `org.iso.18013.5.1.mDL` (a state mobile driver's license) or `aamva.pdf417`. A Google Wallet **ID pass** (built from
+  a passport) or other ID types don't match. Separately, Credence documents the QR / `mdoc-openid4vp://` flow for
+  Samsung Wallet; Google Wallet and Apple Wallet are reached through the browser's Digital Credentials API instead.
+- **Fix:** match the path to the wallet (Google Wallet → "Google Wallet / Android" in Chrome 141+; Apple Wallet →
+  "Apple Wallet / iPhone" in Safari; QR for Samsung Wallet), and make sure the Credence profile includes the
+  provider's document type. Profiles can add "Google ID Pass" as a document type, but only via a custom profile from
+  Credence support. In the meantime, use the manual fallback with the license barcode scan.
+
 ### Mobile ID verifies, but there's no name or date of birth to match
 - **Symptom:** the wallet presentation succeeds and the credential is genuine, but the record-match table is empty.
 - **Cause:** the Cloud SDK license is bound to a Credence **profile**, and the profile (not the API request) decides
