@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Root handles system-bar insets (edge-to-edge on Android 15+); see ui/BaseActivity. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/brand"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="@style/ThemeOverlay.Material3.Dark.ActionBar" />
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/reader_status"
+        style="@style/StatusPill"
+        android:background="@drawable/bg_status_neutral"
+        android:text="@string/reader_initializing" />
+
+    <TextView
+        android:id="@+id/config_warning"
+        style="@style/StatusPill"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_status_yellow"
+        android:visibility="gone" />
+
+    <TextView
+        style="@style/Heading"
+        android:layout_marginTop="16dp"
+        android:text="@string/todays_visits" />
+
+    <TextView
+        android:id="@+id/server_url"
+        style="@style/Muted"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/list_message"
+        style="@style/Muted"
+        android:layout_marginBottom="8dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/visit_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+</LinearLayout>
+</LinearLayout>

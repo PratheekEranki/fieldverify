@@ -4,20 +4,22 @@ Flows A/B (DC API): start -> browser calls navigator.credentials.get -> complete
 Flow C (QR / deep link): start -> browser shows a QR code -> poll status until the wallet answers.
 Claims are never logged. The portrait is held only in the in-memory result, never in the audit log.
 """
+import hmac
 import threading
 import time
 import uuid
 from datetime import date, datetime, timezone
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 from sqlmodel import Session
 
 from app import results
+from app.config import settings
 from app.credence import flows
 from app.credence.client import CredenceError, get_client
-from app.credence.parse import DigitalOutcome
+from app.credence.parse import DigitalOutcome, _issuer, _normalize_claims
 from app.db import get_session
 from app.models import Provider, Visit
 from app.routers.verify_manual import load_visit_and_provider, match_out, record_view
@@ -202,3 +204,69 @@ def supplement(body: SupplementRequest, session: Session = Depends(get_session))
     })
     results.put(result)
     return result
+
+
+# --- Android reader (Tap2iD SDK, in person). See docs/android/CONTEXT.md §7-8. ----------------------------------
+
+MDL_DOC_TYPE = "org.iso.18013.5.1.mDL"
+
+
+class Tap2iDDocument(BaseModel):
+    """One document from Tap2iD's VerificationResult, flattened by the app. Raw SDK facts; the server decides."""
+
+    doc_type: str = Field(max_length=200)
+    issuer_signed_valid: bool
+    device_signed_valid: bool
+    digests_valid: bool
+    issuer_trusted: bool
+    chain_status: str = Field(max_length=20)  # VERIFIED / EXPIRED / UNTRUSTED
+    mso_status: str = Field(max_length=20)  # VALID / NOT_YET_VALID / EXPIRED / UNKNOWN
+    issuer_dn: str | None = Field(default=None, max_length=500)
+    validation_errors: list[str] = Field(default_factory=list, max_length=50)
+    namespaces: dict[str, dict] = Field(default_factory=dict)
+
+
+class Tap2iDRequest(BaseModel):
+    visit_id: int
+    sdk_version: str | None = Field(default=None, max_length=40)
+    status: str = Field(max_length=20)  # SUCCESS / PARTIAL_SUCCESS / FAILURE
+    documents: list[Tap2iDDocument] = Field(default_factory=list, max_length=5)
+
+
+def require_device_token(x_device_token: str | None = Header(default=None)) -> None:
+    """Prototype device auth: a shared secret. Production would use Play Integrity attestation or mTLS."""
+    if not settings.android_device_token:
+        raise HTTPException(503, detail={"code": "android_not_configured",
+                                         "message": "The server has no Android device token configured."})
+    if not x_device_token or not hmac.compare_digest(x_device_token, settings.android_device_token):
+        raise HTTPException(401, detail={"code": "bad_device_token", "message": "Unknown device."})
+
+
+def tap2id_checks(doc: Tap2iDDocument) -> dict[str, bool]:
+    return {
+        "issuerSignedValid": doc.issuer_signed_valid,
+        "deviceSignedValid": doc.device_signed_valid,
+        "digestsValid": doc.digests_valid,
+        "issuerTrusted": doc.issuer_trusted,
+        "chainVerified": doc.chain_status.upper() == "VERIFIED",
+        "msoValid": doc.mso_status.upper() == "VALID",
+        "noValidationErrors": not doc.validation_errors,
+    }
+
+
+def tap2id_outcome(body: Tap2iDRequest) -> DigitalOutcome:
+    """Authenticity is recomputed here from the individual checks, never taken from a single flag sent by the app."""
+    if not body.documents:
+        return DigitalOutcome("failed", message="The reader returned no document.")
+    doc = next((d for d in body.documents if d.doc_type == MDL_DOC_TYPE), body.documents[0])
+    checks = tap2id_checks(doc)
+    claims = _normalize_claims(doc.namespaces)
+    ok = body.status.upper() == "SUCCESS" and all(checks.values())
+    return DigitalOutcome("verified" if ok else "failed", claims, checks, _issuer(claims) or doc.issuer_dn,
+                          None if ok else "The credential did not pass the in-person check.")
+
+
+@router.post("/tap2id", response_model=VerificationResult, dependencies=[Depends(require_device_token)])
+def tap2id(body: Tap2iDRequest, session: Session = Depends(get_session)) -> VerificationResult:
+    visit, provider = load_visit_and_provider(session, body.visit_id)
+    return build_digital_result(visit, provider, "tap2id", tap2id_outcome(body), channel="android")

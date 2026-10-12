@@ -1,0 +1,16 @@
+<resources>
+    <color name="brand">#1F4E79</color>
+    <color name="brand_dark">#163A5C</color>
+    <color name="surface">#F6F8FA</color>
+    <color name="card">#FFFFFF</color>
+    <color name="text">#1B1F24</color>
+    <color name="muted">#5B6570</color>
+    <color name="border">#D8DEE4</color>
+    <color name="green_bg">#E6F4EA</color>
+    <color name="green_text">#1E7B45</color>
+    <color name="yellow_bg">#FFF4D6</color>
+    <color name="yellow_text">#8A5A00</color>
+    <color name="red_bg">#FDECEA</color>
+    <color name="red_text">#B42318</color>
+    <color name="neutral_bg">#EEF1F4</color>
+</resources>

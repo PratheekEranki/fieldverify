@@ -31,6 +31,7 @@ It is a working prototype built for a job interview take-home (Credence ID, Solu
 | `docs/plan.md` | Phases, day-by-day schedule, checkpoints, risks |
 | `tasks/todo.md` | The ordered task list. Work from here. |
 | `docs/decisions/` | ADRs. Why things are the way they are. Read before changing a decision. |
+| `docs/android/CONTEXT.md` | **Android work only.** Verified Tap2iD SDK API (from the real artifact), toolchain, backend contract, open questions. Read it before any Android change. |
 
 Load only what the current task needs. Don't read the whole repo for a small change.
 
@@ -67,9 +68,9 @@ Load only what the current task needs. Don't read the whole repo for a small cha
 
 - Backend: Python 3.11+, FastAPI, SQLModel (SQLite), httpx, pytest. Lives in `backend/`.
 - Web front end: React 18 + TypeScript + Vite. Lives in `frontend/`.
-- Android front end (stretch): **Java**, plus exactly one Kotlin file wrapping the SDK's suspend functions
-  (`Tap2iDVerifier.kt`). Android Studio, Gradle JDK 17, minSdk 29, Tap2iD SDK 2.0.0. Lives in `android/`.
-  Only start it when `tasks/todo.md` says Phase 4 is go.
+- Android front end: **Java**, plus exactly one Kotlin file wrapping the SDK's suspend functions
+  (`Tap2iDVerifier.kt`). AGP 8.13.2, Gradle 8.14.3, compileSdk 36, minSdk 29, Tap2iD SDK 2.0.0. Lives in
+  `android/`. **Read `docs/android/CONTEXT.md` first**; never use SDK APIs that aren't listed there.
 
 The human is on **Windows** (PowerShell). Give commands that work there.
 
@@ -87,6 +88,11 @@ pytest -q
 cd frontend
 npm install
 npm run dev                                         # http://localhost:5173, proxies /api to :8000
+
+# android (needs android/local.properties, see android/README.md)
+cd android
+.\gradlew.bat :app:assembleDebug :app:testDebugUnitTest
+.\gradlew.bat :app:installDebug                     # phone connected over USB
 ```
 
 ## Code conventions

@@ -169,10 +169,9 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
 - [ ] **T24 Demo hardening** (S) — reset done (`POST /api/demo/reset`, token-guarded; `python -m app.seed` locally). Remaining: checklist + five clean runs: `python -m app.seed --demo-reset`; `_private/demo-checklist.md` (steps and expected
   screens only, no narration); five clean runs on the HTTPS URL.
 
-- [ ] **A2-backend Tap2iD endpoint** (S) — only if A1 passed; Monday
-  - `POST /api/verify/digital/tap2id` with `X-Device-Token`; recomputes authenticity from the five booleans
-    (architecture §5b); `channel = android`. Test with a hand-written fixture.
-  - Acceptance: (1) missing/wrong token → 401; (2) all-true booleans + matching claims → green verified result.
+- [x] **A2-backend Tap2iD endpoint** (S) — done Oct 12. `POST /api/verify/digital/tap2id`, `X-Device-Token`
+  (401 wrong/missing, 503 if the server has none); authenticity recomputed from the real SDK checks
+  (`docs/android/CONTEXT.md` §7); `channel = android`, `flow = tap2id`. `tests/test_verify_tap2id.py` (17 cases).
 
 **Checkpoint D (Mon night)**: web demo complete on HTTPS. **Web feature freeze.**
 
@@ -180,22 +179,13 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
 
 ## Phase 4 — Android reader (Tue Oct 13, only if A1 passed). HARD STOP 8:00 PM CT.
 
-- [ ] **A2 Android scaffold + SDK init** (M)
-  - New Android Studio project `com.fieldverify.reader`, **Java**, minSdk 29, **Gradle JDK 17**; add the Kotlin
-    Android plugin + `kotlinx-coroutines-android` for the one wrapper file; Credence Maven repo + dependency
-    (architecture §5b); key, backend URL, device token in `local.properties` (gitignored).
-  - `Tap2iDVerifier.kt` + `Tap2iDCallback.java`: the only Kotlin in the project.
-  - Resolve the `SdkConfig` signature from the real artifact; answer architecture §9 #7.
-  - Acceptance: (1) app launches and `initSdk` reports success on the phone.
-
-- [ ] **A3 Visit picker + tap verify** (M) — depends A2
-  - Fetch today's visits from the backend; select one; `verifyMdoc` with NFC (and QR if quick); log one redacted
-    `MdocAttributes` result before writing the claim mapping.
-  - Acceptance: (1) tapping the wallet ID produces a `VerificationResult` on the phone.
-
-- [ ] **A4 Post to backend + result + save** (M) — depends A3, A2-backend
-  - Post claims + booleans; render the returned outcome, authenticity, and match table; "Save" → `POST /api/audit`.
-  - Acceptance: (1) the row appears in the web audit log with `channel = android`.
+- [x] **A2–A4 code** — done Oct 12 in `android/` (see `android/README.md`). Builds clean (AGP 8.13.2, compileSdk 36),
+  3 JVM unit tests pass. SDK signatures came from the real 2.0.0 artifact (`docs/android/CONTEXT.md`).
+- [ ] **A2 🧑 On the phone: SDK init** — fill `android/local.properties`, set `ANDROID_DEVICE_TOKEN` on Render, run.
+  - Acceptance: the start screen says "Mobile ID reader ready" and shows a profile name (record it in CONTEXT §11 #1).
+- [ ] **A3 🧑 On the phone: read the wallet ID** (NFC, else QR).
+  - Acceptance: a result screen appears; copy the `adb logcat -s FieldVerify` shape line into CONTEXT §7 / §11 #2.
+- [ ] **A4 🧑 Save** → the row appears in the web audit log with `channel = android`.
 
 - [ ] **A5 🧑 Go/no-go** (S): three clean end-to-end runs before 8:00 PM CT. Pass → include in README and demo.
   Fail → remove from README and demo; it's a "phase 2" slide.

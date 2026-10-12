@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Root handles system-bar insets (edge-to-edge on Android 15+); see ui/BaseActivity. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/brand"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="@style/ThemeOverlay.Material3.Dark.ActionBar" />
+
+<ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <LinearLayout style="@style/Card">
+
+            <TextView
+                android:id="@+id/provider_name"
+                style="@style/Heading"
+                android:layout_marginBottom="2dp" />
+
+            <TextView
+                android:id="@+id/provider_details"
+                style="@style/Muted" />
+
+            <TextView
+                android:id="@+id/visit_address"
+                style="@style/Muted" />
+        </LinearLayout>
+
+        <LinearLayout style="@style/Card">
+
+            <TextView
+                style="@style/Heading"
+                android:text="@string/verify_heading" />
+
+            <TextView
+                style="@style/Body"
+                android:layout_marginBottom="16dp"
+                android:text="@string/verify_instructions" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_nfc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/tap_nfc" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_qr"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/scan_qr" />
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/progress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:indeterminate="true"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/stage_log"
+                style="@style/Body"
+                android:layout_marginTop="12dp"
+                android:lineSpacingExtra="4dp" />
+
+            <TextView
+                android:id="@+id/error_text"
+                style="@style/StatusPill"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_status_red"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_cancel"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/cancel"
+                android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>
+</LinearLayout>

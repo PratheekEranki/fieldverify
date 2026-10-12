@@ -1,0 +1,25 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        // Credence ID SDKs (open repo, no credentials). See docs/android/CONTEXT.md §3.
+        maven { url = uri("https://nexus.credenceid.com/repository/credenceid-sdk-group/") }
+        // One transitive SDK dependency (com.github.Akaizz.Fetch:fetch2) is only on JitPack.
+        maven {
+            url = uri("https://jitpack.io")
+            content { includeGroupByRegex("com\\.github\\..*") }
+        }
+    }
+}
+
+rootProject.name = "FieldVerifyReader"
+include ':app'

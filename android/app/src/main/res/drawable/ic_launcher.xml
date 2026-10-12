@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Simple shield with a check mark. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48">
+    <path android:fillColor="#1F4E79" android:pathData="M24,3 L42,10 L42,23 C42,34 34,42 24,45 C14,42 6,34 6,23 L6,10 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M20.5,30.5 L13.5,23.5 L16.3,20.7 L20.5,24.9 L31.7,13.7 L34.5,16.5 Z" />
+</vector>

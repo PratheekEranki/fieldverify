@@ -1,0 +1,65 @@
+<resources>
+    <string name="app_name">FieldVerify Reader</string>
+    <string name="refresh">Refresh</string>
+    <string name="server_label">Server: %1$s</string>
+    <string name="config_missing">Not configured: %1$s. Add it to android/local.properties and rebuild.</string>
+    <string name="reader_initializing">Mobile ID reader: checking license…</string>
+    <string name="reader_ready">Mobile ID reader ready · %1$s</string>
+    <string name="reader_failed">Mobile ID reader unavailable: %1$s (tap to retry)</string>
+    <string name="loading_visits">Loading today\'s visits… (the free server can take up to a minute to wake)</string>
+    <string name="no_visits">No visits scheduled today.</string>
+    <string name="todays_visits">Today\'s site visits</string>
+    <string name="visit_details">NPI %1$s · %2$s</string>
+
+    <string name="verify_heading">Verify the provider\'s mobile ID</string>
+    <string name="verify_instructions">Ask the provider to open the ID in their phone wallet. Tap the two phones together, or scan the QR code the wallet shows. The provider approves the request on their phone.</string>
+    <string name="tap_nfc">Tap phones (NFC)</string>
+    <string name="scan_qr">Scan wallet QR code</string>
+    <string name="cancel">Cancel</string>
+    <string name="scan_prompt">Scan the QR code shown in the provider\'s wallet</string>
+    <string name="not_mdoc_qr">That QR code isn\'t a mobile ID engagement code (it should start with \"mdoc:\").</string>
+    <string name="hold_phones_together">Hold the two phones back to back…</string>
+    <string name="permissions_needed">The reader needs Nearby devices (Bluetooth) access to receive the ID, and the camera for QR. Allow them in Settings to continue.</string>
+    <string name="no_nfc">This phone has no NFC. Use the QR code option.</string>
+    <string name="nfc_off">Turn on NFC, then try again.</string>
+    <string name="reader_not_ready">The mobile ID reader isn\'t ready: %1$s</string>
+    <string name="read_failed">Reading the ID failed at \"%1$s\": %2$s</string>
+    <string name="checking_with_server">ID received. Checking it against the enrollment record…</string>
+    <string name="stage_nfc">Connect by NFC</string>
+    <string name="stage_qr">Connect by QR code</string>
+    <string name="stage_connection">Secure connection</string>
+    <string name="stage_request">Request sent (provider approves on their phone)</string>
+    <string name="stage_response">Verify the ID</string>
+
+    <string name="result_provider">%1$s · NPI %2$s</string>
+    <string name="authenticity_heading">1. Is the ID genuine?</string>
+    <string name="auth_verified">Genuine: issuer signature and device checks passed</string>
+    <string name="auth_failed">Not verified: one or more checks failed</string>
+    <string name="issuer_label">Issued by %1$s</string>
+    <string name="issuer_unknown">Issuer not shared</string>
+    <string name="portrait_hint">Photo from the credential. Compare it with the person in front of you.</string>
+    <string name="match_heading">2. Does it match the enrollment record?</string>
+    <string name="match_summary">Score %1$d · %2$s · %3$s</string>
+    <string name="cap_label">Capped</string>
+    <string name="source_wallet">compared using data from the mobile ID</string>
+    <string name="source_id_details">compared using the printed ID details</string>
+    <string name="source_none">nothing to compare yet</string>
+
+    <string name="supplement_heading">Complete the record check</string>
+    <string name="supplement_body">This ID was verified as genuine but only shared an age check, not a name or date of birth. Confirm the photo, then enter the name and date of birth printed on the provider\'s ID.</string>
+    <string name="photo_matches">The photo matches the person present</string>
+    <string name="first_name">First name (optional)</string>
+    <string name="last_name">Last name</string>
+    <string name="dob_hint">Date of birth (YYYY-MM-DD)</string>
+    <string name="check_details">Check ID details against record</string>
+    <string name="photo_required">Confirm the photo matches the person present.</string>
+    <string name="last_name_required">Enter the last name from the ID.</string>
+    <string name="dob_format">Enter the date of birth as YYYY-MM-DD.</string>
+
+    <string name="save_heading">Save</string>
+    <string name="notes_hint">Notes (optional, no ID numbers)</string>
+    <string name="save_to_audit">Save to audit log</string>
+    <string name="saved">Saved</string>
+    <string name="saved_entry">Saved as audit entry #%1$d.</string>
+    <string name="back_to_visits">Back to visits</string>
+</resources>

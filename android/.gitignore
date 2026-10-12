@@ -1,0 +1,11 @@
+# Secrets live here (TAP2ID_API_KEY, DEVICE_TOKEN). Never commit.
+local.properties
+.gradle/
+build/
+app/build/
+.idea/
+*.iml
+captures/
+.kotlin/
+*.apk
+*.aab

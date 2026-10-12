@@ -260,40 +260,11 @@ Mapping claims → scoring input: `given_name → first_name`, `family_name → 
 **Rule for the agent:** the first real response for each flow is logged (redacted) to `backend/tests/fixtures/` and the
 parser is written against it, not against this doc.
 
-## 5b. Credence Tap2iD SDK integration (Android stretch, ADR-0006)
+## 5b. Credence Tap2iD SDK integration (Android, ADR-0006)
 
-Confirmed from the public docs (Oct 9 2026):
-
-- Evaluation key: portal → License Management → Generate License → **In-person SDK** → Android → app package name
-  (must match `applicationId` exactly; each package name can be registered once per account) → Evaluation (free, 90 days).
-- Maven repo (in `settings.gradle.kts` → `dependencyResolutionManagement`):
-  `https://nexus.credenceid.com/repository/credenceid-sdk-group/`
-- Dependency: `implementation("com.credenceid:tap2idSdk:2.0.0")`
-- Toolchain: Android Studio (recent), **Gradle JDK 17** (set in Settings → Build Tools → Gradle; the machine's
-  default JDK 21 stays for everything else), Gradle wrapper 8.14.x, **minSdk 29 (Android 10)**.
-- Language split: app code in **Java**. `initSdk` and `verifyMdoc` are Kotlin `suspend` functions, which Java can't
-  call cleanly, so one Kotlin file (`Tap2iDVerifier.kt`) wraps them and exposes plain callbacks to Java. Keep all other
-  logic out of that file. Needs the Kotlin Android plugin and `kotlinx-coroutines-android`.
-- Entry point `Tap2iDSdk`: `initSdk(config, InitSdkResultListener)` once at startup;
-  `verifyMdoc(EngagementConfig, MdocVerificationListener)` per verification. Both are `suspend`.
-- `EngagementConfig(qrConfig: QrConfig?, nfcConfig: NfcConfig?)`; at least one non-null. `NfcConfig(activity)`,
-  `QrConfig(mDocString)`.
-- Listener stages: `onVerificationStageStarted / Error / Completed`, then `onVerificationCompleted(VerificationResult)`.
-- `VerificationResult`: `mdocAttributes`, `isIssuerSignedAuthenticated`, `isDeviceSignedAuthenticated`, `issuerInfo`,
-  `isIssuerVerified`, `isMsoSigned`, `validationErrors`.
-- **Docs disagree** on `SdkConfig`: the integration page shows `SdkConfig(apiKey, transport = TransportType.BLE)` with
-  `onSuccess/onError`; the API reference shows `SdkConfig(apiKey, applicationContext)` with
-  `onInitializationSuccess/onInitializationFailure`. Resolve against the actual 2.0.0 artifact in Android Studio
-  (autocomplete / decompiled class), not by guessing.
-- Fields inside `MdocAttributes` are **not documented**. Log one real result (redacted) before writing the mapping.
-
-Mapping to our `authenticity`: `verified` only if `isIssuerSignedAuthenticated && isDeviceSignedAuthenticated &&
-isIssuerVerified && isMsoSigned && validationErrors.isNullOrEmpty()`. All five booleans go into `auth_checks`.
-The backend recomputes the status from the booleans rather than trusting a status string from the device.
-
-Trust model (say this out loud in Q&A): the backend can't re-verify a Tap2iD result, because the cryptography ran on
-the phone. The prototype authenticates the device with a static `X-Device-Token` from `.env`. Production would use
-device attestation (Play Integrity) or mTLS per enrolled reader.
+**Moved and corrected: see [`docs/android/CONTEXT.md`](android/CONTEXT.md).** The earlier version of this section was
+written from Credence's web docs, which turned out to be wrong for SDK 2.0.0 (`VerificationResult` shape, `SdkConfig`,
+init listener). The context file is built from the compiled artifact.
 
 ## 6. Frontend flow
 

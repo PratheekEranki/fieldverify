@@ -1,0 +1,75 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+// Secrets and per-machine settings come from local.properties (gitignored), never from source.
+def localProps = new Properties()
+def localFile = rootProject.file('local.properties')
+if (localFile.exists()) {
+    localFile.withInputStream { localProps.load(it) }
+}
+def prop = { String key, String fallback -> (localProps.getProperty(key) ?: fallback).trim() }
+def quoted = { String value -> '"' + value.replace('\\', '\\\\').replace('"', '\\"') + '"' }
+
+android {
+    namespace 'com.fieldverify.reader'
+    compileSdk 36
+
+    defaultConfig {
+        // Must match the package the Tap2iD evaluation license was issued for.
+        applicationId 'com.fieldverify.reader'
+        minSdk 29          // Tap2iD SDK minimum (Android 10)
+        targetSdk 36
+        versionCode 1
+        versionName '0.1.0'
+
+        buildConfigField 'String', 'TAP2ID_API_KEY', quoted(prop('TAP2ID_API_KEY', ''))
+        buildConfigField 'String', 'BACKEND_URL', quoted(prop('BACKEND_URL', 'https://fieldverify-avyq.onrender.com'))
+        buildConfigField 'String', 'DEVICE_TOKEN', quoted(prop('DEVICE_TOKEN', ''))
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    packaging {
+        resources {
+            // BouncyCastle and other SDK dependencies ship duplicate metadata files.
+            excludes += ['META-INF/versions/9/OSGI-INF/MANIFEST.MF', 'META-INF/DEPENDENCIES',
+                         'META-INF/LICENSE*', 'META-INF/NOTICE*', 'META-INF/INDEX.LIST']
+        }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}
+
+dependencies {
+    implementation 'com.credenceid:tap2idSdk:2.0.0'
+
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'com.google.android.material:material:1.13.0'
+    implementation 'androidx.recyclerview:recyclerview:1.4.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.google.code.gson:gson:2.11.0'
+    // Camera QR scanner for QR engagement when NFC isn't available.
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+
+    testImplementation 'junit:junit:4.13.2'
+}

@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Root handles system-bar insets (edge-to-edge on Android 15+); see ui/BaseActivity. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/brand"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="@style/ThemeOverlay.Material3.Dark.ActionBar" />
+
+<ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/outcome_banner"
+            style="@style/StatusPill"
+            android:padding="16dp"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/result_provider"
+            style="@style/Muted"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Signal 1: authenticity (Credence's cryptographic checks, recomputed by the backend) -->
+        <LinearLayout style="@style/Card">
+
+            <TextView
+                style="@style/Heading"
+                android:text="@string/authenticity_heading" />
+
+            <TextView
+                android:id="@+id/auth_status"
+                style="@style/Body"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/auth_issuer"
+                style="@style/Muted"
+                android:layout_marginBottom="8dp" />
+
+            <ImageView
+                android:id="@+id/portrait"
+                android:layout_width="140dp"
+                android:layout_height="170dp"
+                android:layout_marginTop="4dp"
+                android:contentDescription="@string/portrait_hint"
+                android:scaleType="centerCrop"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/portrait_hint"
+                style="@style/Muted"
+                android:layout_marginBottom="8dp"
+                android:text="@string/portrait_hint"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/auth_checks"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </LinearLayout>
+
+        <!-- Signal 2: record match -->
+        <LinearLayout style="@style/Card">
+
+            <TextView
+                style="@style/Heading"
+                android:text="@string/match_heading" />
+
+            <TextView
+                android:id="@+id/match_summary"
+                style="@style/Body"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:id="@+id/match_fields"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </LinearLayout>
+
+        <!-- Age-check profile: finish with the physical ID's printed details (ADR-0007) -->
+        <LinearLayout
+            android:id="@+id/supplement_section"
+            style="@style/Card"
+            android:visibility="gone">
+
+            <TextView
+                style="@style/Heading"
+                android:text="@string/supplement_heading" />
+
+            <TextView
+                style="@style/Body"
+                android:layout_marginBottom="8dp"
+                android:text="@string/supplement_body" />
+
+            <CheckBox
+                android:id="@+id/supplement_photo_check"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/photo_matches" />
+
+            <EditText
+                android:id="@+id/supplement_first"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:autofillHints="personGivenName"
+                android:hint="@string/first_name"
+                android:inputType="textPersonName|textCapWords" />
+
+            <EditText
+                android:id="@+id/supplement_last"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:autofillHints="personFamilyName"
+                android:hint="@string/last_name"
+                android:inputType="textPersonName|textCapWords" />
+
+            <EditText
+                android:id="@+id/supplement_dob"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/dob_hint"
+                android:importantForAutofill="no"
+                android:inputType="date" />
+
+            <TextView
+                android:id="@+id/supplement_error"
+                style="@style/StatusPill"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_status_red"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_supplement"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/check_details" />
+        </LinearLayout>
+
+        <LinearLayout style="@style/Card">
+
+            <TextView
+                style="@style/Heading"
+                android:text="@string/save_heading" />
+
+            <CheckBox
+                android:id="@+id/save_photo_check"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/photo_matches" />
+
+            <EditText
+                android:id="@+id/notes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/notes_hint"
+                android:importantForAutofill="no"
+                android:inputType="textMultiLine|textCapSentences"
+                android:maxLength="2000"
+                android:minLines="2" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_save"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/save_to_audit" />
+
+            <TextView
+                android:id="@+id/save_status"
+                style="@style/Body"
+                android:layout_marginTop="8dp"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_done"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/back_to_visits" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>
+</LinearLayout>

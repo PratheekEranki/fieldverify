@@ -1,0 +1,8 @@
+# Copy to local.properties (gitignored). Android Studio adds sdk.dir itself.
+# TAP2ID_API_KEY: the In-person SDK evaluation key for com.fieldverify.reader (repo-root .env has it).
+TAP2ID_API_KEY=
+# BACKEND_URL: the FieldVerify backend. Render, or http://10.0.2.2:8000 for a local backend on the emulator,
+# or http://<your PC's LAN IP>:8000 from a real phone on the same Wi-Fi (debug builds allow plain http).
+BACKEND_URL=https://fieldverify-avyq.onrender.com
+# DEVICE_TOKEN: must equal ANDROID_DEVICE_TOKEN on the backend.
+DEVICE_TOKEN=

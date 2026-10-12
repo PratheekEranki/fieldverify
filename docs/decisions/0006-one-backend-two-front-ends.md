@@ -34,3 +34,5 @@ We still want the Android story if it can be done safely.
   device's report. The prototype uses a per-device API token (`X-Device-Token`); production would need device
   attestation or mTLS. This is stated openly in the README and is a good Q&A answer.
 - Audit entries record `channel` (`web` / `android`) and `flow` (`A`–`D` / `tap2id`).
+- Oct 12: the SDK's real result shape differs from the web docs; the authenticity rule is now defined on the real
+  types in `docs/android/CONTEXT.md` §7 (supersedes "five booleans" above).
