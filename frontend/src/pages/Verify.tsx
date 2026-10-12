@@ -2,7 +2,9 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ApiError, api } from '../api/client'
 import type { Health, Visit } from '../api/types'
+import type { LicenseFields } from '../license/aamva'
 import { DigitalPanel } from '../components/DigitalPanel'
+import { LicenseScanButton } from '../components/LicenseScanButton'
 import { ErrorBox, Loading } from '../components/Loading'
 import { MaskedSsnInput } from '../components/MaskedSsnInput'
 import { formatTime } from './VisitList'
@@ -28,6 +30,17 @@ export function Verify() {
 
   const set = (key: keyof Form) => (value: string) => setForm((f) => ({ ...f, [key]: value }))
   const canSubmit = form.last_name.trim() && form.dob && photoChecked && !submitting
+
+  function fillFromLicense(f: LicenseFields) {
+    setForm((prev) => ({
+      ...prev,
+      first_name: f.firstName ?? prev.first_name,
+      last_name: f.lastName ?? prev.last_name,
+      dob: f.dob ?? prev.dob,
+      street: f.street ?? prev.street,
+      zip5: f.zip5 ?? prev.zip5,
+    }))
+  }
 
   async function submit(e: FormEvent) {
     e.preventDefault()
@@ -116,6 +129,7 @@ export function Verify() {
             Enter what is printed on the provider's physical ID. Required: last name and date of birth. Every extra
             field makes the match stronger.
           </p>
+          <LicenseScanButton onFields={fillFromLicense} />
           <div className="form-grid">
             <label>
               First name

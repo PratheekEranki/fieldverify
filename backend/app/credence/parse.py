@@ -26,6 +26,11 @@ class DigitalOutcome:
     message: str | None = None
 
     @property
+    def attributes(self) -> dict[str, bool]:
+        """Non-identifying attestations the wallet shared, e.g. {"age_over_21": True} from an age-check profile."""
+        return {k: v for k, v in self.claims.items() if isinstance(v, bool) and re.fullmatch(r"age_over_\d{2}", k)}
+
+    @property
     def first_name(self) -> str | None:
         return self.claims.get("given_name")
 

@@ -7,7 +7,7 @@ Claims are never logged. The portrait is held only in the in-memory result, neve
 import threading
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
@@ -89,7 +89,8 @@ def build_digital_result(visit: Visit, provider: Provider, flow: str, outcome: D
     presented = Presented(first_name=outcome.first_name, last_name=outcome.last_name, dob=outcome.dob)
     match = score_identity(presented, record_view(provider))
     authenticity = "verified" if outcome.status == "verified" else "failed"
-    label, color = outcome_for("digital", authenticity, match.band)
+    nothing_compared = match.provided_weight == 0
+    label, color = outcome_for("digital", authenticity, match.band, nothing_compared=nothing_compared)
     result = VerificationResult(
         id=str(uuid.uuid4()),
         created_at=datetime.now(timezone.utc),
@@ -103,6 +104,8 @@ def build_digital_result(visit: Visit, provider: Provider, flow: str, outcome: D
         match=match_out(match),
         outcome=OutcomeOut(label=label, color=color),
         portrait_data_url=outcome.portrait_data_url,
+        attributes=outcome.attributes,
+        match_source="none" if nothing_compared else "wallet",
     )
     results.put(result)
     return result
@@ -154,3 +157,48 @@ def status(session_id: str, session: Session = Depends(get_session)) -> StatusRe
     if outcome is None:
         return StatusResponse(status="pending")
     return StatusResponse(status="done", result=_finish(session_id, flow, visit_id, outcome, session))
+
+
+class SupplementRequest(BaseModel):
+    """Complete an age-check-profile result: the auditor confirms the photo and takes name/DOB from the physical ID."""
+
+    result_id: str
+    photo_checked: bool
+    first_name: str | None = Field(default=None, max_length=80)
+    last_name: str = Field(min_length=1, max_length=80)
+    dob: date
+
+
+@router.post("/supplement", response_model=VerificationResult)
+def supplement(body: SupplementRequest, session: Session = Depends(get_session)) -> VerificationResult:
+    """Only for a verified credential that shared no name/DOB. Authenticity is carried over from Credence's check;
+    the record match uses the ID's printed details and is labelled as such (match_source="id_details")."""
+    original = results.get(body.result_id)
+    if original is None:
+        raise HTTPException(404, detail={"code": "result_not_found",
+                                         "message": "Result not found or expired. Run the verification again."})
+    if not (original.mode == "digital" and original.authenticity.status == "verified"
+            and original.match_source == "none"):
+        raise HTTPException(409, detail={"code": "not_supplementable",
+                                         "message": "Only a verified mobile ID that shared no name or DOB can be "
+                                                    "completed with details from the ID."})
+    if not body.photo_checked:
+        raise HTTPException(422, detail={"code": "photo_check_required",
+                                         "message": "Confirm the photo from the credential matches the person "
+                                                    "present."})
+    visit, provider = load_visit_and_provider(session, original.visit_id)
+    match = score_identity(Presented(first_name=body.first_name, last_name=body.last_name, dob=body.dob),
+                           record_view(provider))
+    label, color = outcome_for("digital", "verified", match.band, match_source="id_details")
+    result = original.model_copy(update={
+        "id": str(uuid.uuid4()),
+        "created_at": datetime.now(timezone.utc),
+        "match": match_out(match),
+        "outcome": OutcomeOut(label=label, color=color),
+        "photo_checked": True,
+        "match_source": "id_details",
+        "supplements": original.id,
+        "saved": False,
+    })
+    results.put(result)
+    return result

@@ -45,6 +45,15 @@ export function AuthenticityPanel({ result }: { result: VerificationResult }) {
           </ul>
         </>
       )}
+      {Object.keys(result.attributes ?? {}).length > 0 && (
+        <ul className="checks">
+          {Object.entries(result.attributes).map(([key, value]) => (
+            <li key={key} className="muted">
+              Shared by the wallet: {key.replace(/^age_over_(\d+)$/, 'over $1')}: <strong>{value ? 'yes' : 'no'}</strong>
+            </li>
+          ))}
+        </ul>
+      )}
       {result.portrait_data_url && (
         <figure className="portrait">
           <img src={result.portrait_data_url} alt="Portrait from the mobile ID" />

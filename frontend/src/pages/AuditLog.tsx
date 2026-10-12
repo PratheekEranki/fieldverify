@@ -6,6 +6,13 @@ import { BandIcon } from '../components/Icons'
 import { ErrorBox, Loading } from '../components/Loading'
 import { FIELD_LABELS, ResultBadge } from '../components/MatchTable'
 
+const MATCH_SOURCE_LABELS: Record<string, string> = {
+  wallet: 'mobile ID',
+  id_details: 'physical ID (after mobile ID)',
+  manual: 'typed / scanned',
+  none: 'none shared',
+}
+
 export function AuditLog() {
   const [params] = useSearchParams()
   const highlight = Number(params.get('highlight')) || null
@@ -120,6 +127,7 @@ export function AuditLog() {
                           <div className="small">
                             <div>Auditor: {e.auditor}</div>
                             <div>Photo checked: {e.photo_checked == null ? 'n/a' : e.photo_checked ? 'yes' : 'no'}</div>
+                            <div>Name/DOB source: {MATCH_SOURCE_LABELS[e.match_source] ?? e.match_source}</div>
                             {e.notes && <div>Notes: {e.notes}</div>}
                             <div className="mono muted">hash {e.entry_hash.slice(0, 16)}…</div>
                           </div>

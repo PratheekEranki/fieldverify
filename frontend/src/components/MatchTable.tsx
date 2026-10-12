@@ -34,12 +34,22 @@ export function MatchTable({ result }: { result: VerificationResult }) {
         Does the presented identity match this provider's enrollment record? Score {match.score}/100 from{' '}
         {match.provided_weight} of 100 possible weight points.
       </p>
+      {result.match_source === 'id_details' && (
+        <p className="note note-yellow">
+          Name and date of birth were taken from the physical ID after the mobile ID was verified. The wallet's
+          profile shares no name or date of birth.
+        </p>
+      )}
+      {result.match_source === 'wallet' && <p className="small muted">Name and date of birth attested by the mobile ID.</p>}
       {match.hard_rule && <p className="note note-red">Rule applied: {match.hard_rule}</p>}
-      {match.caps.map((c) => (
+      {match.provided_weight > 0 && match.caps.map((c) => (
         <p key={c} className="note note-yellow">
           Capped at yellow: {c}
         </p>
       ))}
+      {match.provided_weight === 0 ? (
+        <p className="muted">Nothing to compare yet: the credential shared no name or date of birth.</p>
+      ) : (
       <div className="table-wrap">
         <table className="table">
           <thead>
@@ -69,6 +79,7 @@ export function MatchTable({ result }: { result: VerificationResult }) {
           </tbody>
         </table>
       </div>
+      )}
     </section>
   )
 }

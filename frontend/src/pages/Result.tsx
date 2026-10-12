@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import type { VerificationResult } from '../api/types'
 import { AuthenticityPanel } from '../components/AuthenticityPanel'
+import { CompleteMatchPanel } from '../components/CompleteMatchPanel'
 import { ErrorBox, Loading } from '../components/Loading'
 import { MatchTable } from '../components/MatchTable'
 import { OutcomeBanner } from '../components/OutcomeBanner'
@@ -13,6 +14,7 @@ export function Result() {
   const [result, setResult] = useState<VerificationResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
+  const [photoConfirmed, setPhotoConfirmed] = useState(false)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -23,7 +25,8 @@ export function Result() {
     if (!result) return
     setSaving(true)
     try {
-      const entry = await api.saveToAudit(result.id, notes)
+      const needsPhoto = result.mode === 'digital' && result.photo_checked == null
+      const entry = await api.saveToAudit(result.id, notes, needsPhoto ? photoConfirmed : undefined)
       navigate(`/audit?highlight=${entry.id}`)
     } catch (e) {
       setError((e as Error).message)
@@ -33,6 +36,10 @@ export function Result() {
 
   if (error && !result) return <ErrorBox message={error} />
   if (!result) return <Loading />
+
+  // A genuine mobile ID that shared no name/DOB (age-check profile) can be completed with the physical ID's details.
+  const canComplete =
+    result.mode === 'digital' && result.authenticity.status === 'verified' && result.match_source === 'none' && !result.saved
 
   return (
     <>
@@ -50,8 +57,15 @@ export function Result() {
         <AuthenticityPanel result={result} />
         <MatchTable result={result} />
       </div>
+      {canComplete && <CompleteMatchPanel result={result} />}
       <section className="panel">
         <h3>Record this visit</h3>
+        {result.mode === 'digital' && result.photo_checked == null && result.portrait_data_url && !canComplete && (
+          <label className="checkbox">
+            <input type="checkbox" checked={photoConfirmed} onChange={(e) => setPhotoConfirmed(e.target.checked)} />
+            I compared the photo from the credential to the person present.
+          </label>
+        )}
         <label className="block">
           Notes for the audit log
           <textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000}
@@ -65,7 +79,7 @@ export function Result() {
             </Link>
           ) : (
             <button className="button" onClick={save} disabled={saving}>
-              {saving ? 'Saving…' : 'Save to audit log'}
+              {saving ? 'Saving…' : canComplete ? 'Save without ID details' : 'Save to audit log'}
             </button>
           )}
         </div>

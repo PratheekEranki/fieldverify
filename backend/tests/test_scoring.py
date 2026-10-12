@@ -154,3 +154,8 @@ def test_outcome_labels():
     # Manual mode can never produce a "Verified" label (ADR-0002).
     for band in ("green", "yellow", "red"):
         assert not outcome_for("manual", "not_checked", band)[0].startswith("Verified")
+
+
+def test_nothing_provided_is_yellow_never_red():
+    r = score_identity(Presented(), RECORD)
+    assert r.band == "yellow" and r.insufficient_data and r.hard_rule is None and r.provided_weight == 0

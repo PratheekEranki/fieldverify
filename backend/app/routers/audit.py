@@ -22,6 +22,8 @@ _append_lock = threading.Lock()  # one writer at a time, so two saves can't link
 class SaveRequest(BaseModel):
     result_id: str
     notes: str = Field(default="", max_length=2000)
+    # Digital results only: the auditor's photo comparison, recorded when saving (manual results set it on submit).
+    photo_checked: bool | None = None
 
 
 class AuditEntryOut(BaseModel):
@@ -30,6 +32,7 @@ class AuditEntryOut(BaseModel):
     auditor: str
     visit_id: int
     visit_type: str
+    match_source: str
     provider_name: str
     provider_npi: str
     mode: str
@@ -50,6 +53,7 @@ class AuditEntryOut(BaseModel):
 def _out(e: AuditEntry, p: Provider) -> AuditEntryOut:
     return AuditEntryOut(
         id=e.id, created_at=e.created_at, auditor=e.auditor, visit_id=e.visit_id, visit_type=e.visit_type,
+        match_source=e.match_source,
         provider_name=f"{p.first_name} {p.last_name}", provider_npi=p.npi, mode=e.mode, channel=e.channel,
         flow=e.flow, authenticity=e.authenticity, auth_checks=e.auth_checks or {}, issuer=e.issuer, score=e.score,
         band=e.band, outcome=e.outcome, field_results=e.field_results or [], photo_checked=e.photo_checked,
@@ -73,6 +77,7 @@ def save(body: SaveRequest, session: Session = Depends(get_session)) -> AuditEnt
             auditor=settings.demo_auditor_name,
             visit_id=result.visit_id,
             visit_type=result.visit_type,
+            match_source=result.match_source,
             provider_id=result.provider.id,
             mode=result.mode,
             channel=result.channel,
@@ -85,7 +90,8 @@ def save(body: SaveRequest, session: Session = Depends(get_session)) -> AuditEnt
             outcome=result.outcome.label,
             # Per-field outcomes only: field name, result, points, reason. No presented values.
             field_results=[f.model_dump() for f in result.match.fields],
-            photo_checked=result.photo_checked,
+            photo_checked=result.photo_checked if result.mode == "manual" or body.photo_checked is None
+            else body.photo_checked,
             notes=body.notes.strip(),
             prev_hash=last.entry_hash if last else GENESIS,
             entry_hash="",
@@ -115,7 +121,7 @@ def list_entries(mode: str | None = None, band: str | None = None,
 
 
 CSV_COLUMNS = ["id", "created_at_utc", "auditor", "visit_id", "visit_type", "provider_name", "provider_npi", "mode",
-               "channel", "flow", "authenticity", "issuer", "score", "band", "outcome", "field_results",
+               "channel", "flow", "authenticity", "issuer", "match_source", "score", "band", "outcome", "field_results",
                "photo_checked", "notes", "entry_hash"]
 
 
@@ -129,7 +135,7 @@ def export_csv(mode: str | None = None, band: str | None = None,
         o = _out(e, p)
         writer.writerow([
             o.id, o.created_at.isoformat(), o.auditor, o.visit_id, o.visit_type, o.provider_name, o.provider_npi,
-            o.mode, o.channel, o.flow or "", o.authenticity, o.issuer or "",
+            o.mode, o.channel, o.flow or "", o.authenticity, o.issuer or "", o.match_source,
             o.score if o.score is not None else "", o.band, o.outcome,
             "; ".join(f"{f['field']}={f['result']}" for f in o.field_results),
             "" if o.photo_checked is None else ("yes" if o.photo_checked else "no"), o.notes, o.entry_hash,

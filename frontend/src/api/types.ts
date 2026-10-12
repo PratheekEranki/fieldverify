@@ -56,6 +56,11 @@ export type VerificationResult = {
   photo_checked: boolean | null
   presented_ssn_masked: string | null
   portrait_data_url: string | null
+  attributes: Record<string, boolean>
+  // wallet: name/DOB attested by the credential; id_details: taken from the physical ID after a genuine credential;
+  // manual: typed/scanned with no credential check; none: nothing compared
+  match_source: 'wallet' | 'id_details' | 'manual' | 'none'
+  supplements: string | null
   saved: boolean
 }
 
@@ -88,6 +93,7 @@ export type AuditEntry = {
   auditor: string
   visit_id: number
   visit_type: 'scheduled' | 'unscheduled'
+  match_source: string
   provider_name: string
   provider_npi: string
   mode: 'digital' | 'manual'

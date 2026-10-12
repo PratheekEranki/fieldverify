@@ -61,8 +61,13 @@ export const api = {
       body: JSON.stringify({ session_id: sessionId, data }),
     }),
   digitalStatus: (sessionId: string) => request<DigitalStatus>(`/api/verify/digital/status/${sessionId}`),
-  saveToAudit: (resultId: string, notes: string) =>
-    request<AuditEntry>('/api/audit', { method: 'POST', body: JSON.stringify({ result_id: resultId, notes }) }),
+  saveToAudit: (resultId: string, notes: string, photoChecked?: boolean) =>
+    request<AuditEntry>('/api/audit', {
+      method: 'POST',
+      body: JSON.stringify({ result_id: resultId, notes, photo_checked: photoChecked ?? null }),
+    }),
+  digitalSupplement: (body: { result_id: string; photo_checked: boolean; first_name?: string; last_name: string; dob: string }) =>
+    request<VerificationResult>('/api/verify/digital/supplement', { method: 'POST', body: JSON.stringify(body) }),
   audit: (filters: { mode?: string; band?: string }) => {
     const q = new URLSearchParams(Object.entries(filters).filter(([, v]) => v) as [string, string][])
     return request<AuditEntry[]>(`/api/audit${q.size ? `?${q}` : ''}`)

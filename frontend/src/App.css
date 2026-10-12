@@ -129,3 +129,6 @@
 .qr-panel img { border: 1px solid var(--border); border-radius: 8px; background: #fff; }
 .portrait { margin: 12px 0 0; }
 .portrait img { width: 140px; max-width: 100%; border-radius: 6px; border: 1px solid var(--border); display: block; }
+.scan-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.scan-row .small { flex: 1 1 260px; }
+.complete-panel { border-color: var(--yellow); }

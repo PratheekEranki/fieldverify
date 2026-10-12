@@ -146,7 +146,7 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
     the backend; secrets set as Render environment variables (never in the repo).
   - Acceptance: (1) full demo (spec §1) on the HTTPS URL; (2) `grep -r "CS-" frontend/dist` is empty.
 
-- [ ] **T19 License barcode scan (PDF417)** (M) — depends T11
+- [x] **T19 License barcode scan (PDF417)** — built Oct 12: zxing-wasm 3.1.4 (zxing-cpp) decodes a photo in the browser, `src/license/aamva.ts` parses it, form pre-fills; license number never read. 15 frontend tests incl. a PDF417 write→read round trip; browser-checked. Still to do: one try with the candidate's real license (worn cards / glare are harder than generated barcodes). (M) — depends T11
   - Camera scan of the AAMVA barcode on a US license → pre-fill the manual form. Try `@zxing/browser` first on a real
     license; answer architecture §9 #8.
   - Acceptance: (1) scanning the candidate's own license fills name, DOB, address; (2) the scan never leaves the browser
@@ -155,7 +155,7 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
 - [ ] **T20 Portrait on result** (S) — only if T13 showed the portrait claim is available
   - Acceptance: (1) portrait shows for digital results; (2) not in DB, CSV, or logs.
 
-- [ ] **T21 Customer integration guide** (M)
+- [x] **T21 Customer integration guide** (M) — `docs/customer/integration-guide.md` + `troubleshooting.md` (Oct 12)
   - `docs/customer/integration-guide.md` per spec F10.
   - Acceptance: (1) someone could configure keys, domain, and browser requirements from it without asking.
 
@@ -163,10 +163,10 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
 
 - [ ] **T22 UI polish** (M): loading/empty states, spacing, icon + text with every color, tablet check.
 
-- [ ] **T23 README** (M): headline, what it does, screenshots, architecture diagram, quickstart (PowerShell), env table,
+- [x] **T23 README** (M) — rewritten Oct 12 with screenshots; "How this was built" needs the candidate's review: headline, what it does, screenshots, architecture diagram, quickstart (PowerShell), env table,
   security decisions, out of scope, **How this was built** (AI tools used and for what; honest).
 
-- [ ] **T24 Demo hardening** (S): `python -m app.seed --demo-reset`; `_private/demo-checklist.md` (steps and expected
+- [ ] **T24 Demo hardening** (S) — reset done (`POST /api/demo/reset`, token-guarded; `python -m app.seed` locally). Remaining: checklist + five clean runs: `python -m app.seed --demo-reset`; `_private/demo-checklist.md` (steps and expected
   screens only, no narration); five clean runs on the HTTPS URL.
 
 - [ ] **A2-backend Tap2iD endpoint** (S) — only if A1 passed; Monday
@@ -209,6 +209,10 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
 - [ ] 🧑 Video ≤ 5 min, on camera for part of it, shows the app working; check it opens without login (Wed)
 - [ ] 🧑 Email bella@credenceid.com, subject `Solution Engineer Assignment - Pratheek Eranki`, with deck, video link,
       code link; mention AI-assisted build (Thu, before 11:00 AM CT)
+
+- [x] **T19b Age Check profile support** (Oct 12, ADR-0007): attributes, `match_source`, `POST /api/verify/digital/supplement`,
+  Complete-the-match panel; 81 backend tests; browser-checked end to end against a fake Credence returning the
+  Age Check payload.
 
 ## P2 backlog (only after Checkpoint D, never on Tuesday)
 

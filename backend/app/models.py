@@ -47,6 +47,7 @@ class AuditEntry(SQLModel, table=True):
     visit_id: int = Field(foreign_key="visit.id")
     provider_id: int = Field(foreign_key="provider.id")
     visit_type: str = "scheduled"  # scheduled / unscheduled
+    match_source: str = "none"  # wallet / id_details / manual / none
     mode: str  # digital / manual
     channel: str  # web / android
     flow: str | None = None  # A/B/C/D or tap2id

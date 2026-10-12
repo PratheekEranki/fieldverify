@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     # Android reader shared secret (X-Device-Token)
     android_device_token: str = ""
 
+    # Demo reset (POST /api/demo/reset). Disabled unless set. Clears the audit log and re-seeds today's visits.
+    demo_reset_token: str = ""
+
     # Demo provider (the candidate's own wallet identity; seeded locally only)
     demo_provider_first: str = ""
     demo_provider_last: str = ""

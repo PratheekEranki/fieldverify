@@ -44,6 +44,21 @@ Success for the prototype = a live, end-to-end demo in under 5 minutes:
 
 Manual mode can never show "Verified". That is the whole point (ADR-0002).
 
+Special case (added Oct 12): digital, credential **verified**, but the Credence profile shared **no name and no DOB**
+(e.g. the default "Age Check Profile 2.0") → **"Credential genuine: no name or DOB shared, compare the photo"**, yellow.
+Nothing to compare is never treated as a mismatch, so it is never red.
+
+Completing that result (ADR-0007): auditor confirms the photo, takes name + DOB from the physical ID →
+`match_source = id_details`:
+
+| Match band | Outcome label |
+|---|---|
+| green | **Credential genuine + photo confirmed; ID details match record** |
+| yellow | **Credential genuine + photo confirmed; ID details partly match: follow up** |
+| red | **Credential genuine, but ID details don't match the record: escalate** |
+
+`match_source` on every result and audit entry: `wallet` (attested by the mobile ID), `id_details`, `manual`, `none`.
+
 ## 4. Features
 
 Priority: **P0** = must work in the demo. **P1** = should have, makes the pitch stronger. **P2** = only if time is left.
@@ -100,7 +115,8 @@ See §5. Pure Python, fully unit-tested, returns per-field breakdown + explanati
 ### F7 — License barcode scan (P1, listed in Credence's nice-to-haves: PDF417)
 - In manual mode, "Scan license barcode" uses the device camera to read the AAMVA PDF417 barcode on the back of a US
   driver's license and pre-fills name, DOB, address. The auditor still confirms the photo.
-- Library choice is settled during T19 (architecture §9, #8).
+- Decoded entirely in the browser (zxing-wasm); only the parsed name, DOB, street and ZIP fill the form. The license
+  number (AAMVA `DAQ`) is never read. Decoder (~1 MB WASM) loads only when the button is used.
 
 ### F8 — Auditor sign-in (P2)
 - Hard-coded demo auditor is fine for P0. A name picker at P2. No real auth.

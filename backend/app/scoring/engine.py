@@ -71,7 +71,9 @@ def score_identity(presented: Presented, record: RecordView) -> MatchResult:
     provided_weight = sum(f.max for f in provided)
 
     if provided_weight == 0:
-        return MatchResult(0, "red", True, 0, "Nothing provided to compare", fields=fields)
+        # Nothing to compare is not evidence of a mismatch (e.g. an age-check profile shares no name or DOB).
+        # Never red here: red means "different person". Yellow + insufficient data sends it to a human.
+        return MatchResult(0, "yellow", True, 0, None, ["No identity details were shared to compare"], fields)
 
     score = round(sum(f.points for f in provided) / provided_weight * 100)
     band = _band(score)
@@ -110,8 +112,25 @@ OUTCOMES = {
 }
 
 
-def outcome_for(mode: str, authenticity: str, band: str) -> tuple[str, str]:
-    """Outcome label + color from spec §3. A failed credential is red regardless of the match."""
+ID_DETAILS_OUTCOMES = {
+    "green": ("Credential genuine + photo confirmed; ID details match record", "green"),
+    "yellow": ("Credential genuine + photo confirmed; ID details partly match: follow up", "yellow"),
+    "red": ("Credential genuine, but ID details don't match the record: escalate", "red"),
+}
+
+
+def outcome_for(mode: str, authenticity: str, band: str, nothing_compared: bool = False,
+                match_source: str | None = None) -> tuple[str, str]:
+    """Outcome label + color from spec §3. A failed credential is red regardless of the match.
+
+    match_source="id_details": the wallet proved the credential genuine but shared no name/DOB (age-check profile),
+    the auditor confirmed the photo, and the name/DOB were taken from the physical ID. Labelled so nobody mistakes
+    it for a wallet-attested record match.
+    """
     if mode == "digital" and authenticity == "failed":
         return ("Credential failed verification: escalate", "red")
+    if mode == "digital" and match_source == "id_details":
+        return ID_DETAILS_OUTCOMES[band]
+    if mode == "digital" and nothing_compared:
+        return ("Credential genuine: no name or DOB shared, compare the photo", "yellow")
     return OUTCOMES[(mode, authenticity, band)]

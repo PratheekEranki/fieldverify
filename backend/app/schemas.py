@@ -89,4 +89,9 @@ class VerificationResult(BaseModel):
     photo_checked: bool | None = None
     presented_ssn_masked: str | None = None  # e.g. ***-**-1234; never the full number
     portrait_data_url: str | None = None  # digital only; held in memory for the result screen, never logged
+    attributes: dict[str, bool] = {}  # e.g. {"age_over_21": true} shared by an age-check profile
+    # Where the compared name/DOB came from: wallet (cryptographically attested), id_details (physical ID after a
+    # genuine credential), manual (typed/scanned, no credential check), none (nothing to compare).
+    match_source: str = "none"
+    supplements: str | None = None  # id of the digital result this one completes
     saved: bool = False

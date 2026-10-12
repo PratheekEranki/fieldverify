@@ -242,6 +242,10 @@ Observed live (Oct 9, `backend/tests/fixtures/`):
 - **Requested claims come from the profile, not the request.** The default "Age Check Profile 2.0" asks for
   mDL `issuing_authority` + `portrait`, or AAMVA `DCS` (last name), `DAC` (first), `DAD` (middle), `DBB` (DOB),
   `DAJ` (state). Our scoring needs `given_name`, `family_name`, `birth_date` → a custom profile is required (T13).
+- **Profiles are read-only and custom ones are created by Credence support** (portal, Oct 12: "To create a new custom
+  profile, please email support@credenceid.com"). "Age Check Profile 2.0" requests, for an mDL, only
+  `issuing_authority`, `portrait` and the age attestation (`age_over_21`); for PDF417 it reads `DBB`. So with the
+  default profile an mDL presentation yields **no name and no DOB** → handled as a yellow "compare the photo" outcome.
 - AAMVA element mapping used by the parser: `DCS→family_name`, `DAC→given_name`, `DBB→birth_date`
   (US format MMDDCCYY), `DAJ→issuing state`.
 
@@ -350,7 +354,7 @@ These are **not questions for the human**. Each is answered by a specific task, 
 | 5 | What `resDetails` contains for flows A/B | T13 fixture | _pending_ |
 | 6 | Does the wallet ID present to the Tap2iD sample app on Android | A1 | _pending_ |
 | 7 | Which `SdkConfig` signature the 2.0.0 artifact really has, and what's in `MdocAttributes` | A2 | _pending_ |
-| 8 | PDF417 library: `@zxing/browser` reads a real license reliably? | T19 | _pending_ |
+| 8 | PDF417 library | T19 | **zxing-wasm 3.1.4** (WebAssembly build of zxing-cpp, much stronger on PDF417 than the pure-JS port). Photo via `<input capture>`, decoded on-device, `textMode: Plain` (default HRI mode turns control chars into `<LF>` tokens). Real-card reliability still to confirm. |
 
 Decided, no longer open: this is a separate git repo (not part of the `D:\projects` repo); Cloud SDK web first;
 the candidate has a real wallet ID; one backend for both front ends.

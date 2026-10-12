@@ -89,6 +89,17 @@ def test_flow_b_genuine_credential_different_person_is_red(api, fake):
     assert r["outcome"]["label"] == "Credential genuine but different person: escalate"
 
 
+def test_genuine_credential_sharing_no_name_or_dob_is_yellow_not_different_person(api, fake):
+    # What the default "Age Check Profile 2.0" returns for an mDL: issuer + portrait (+ age), no name, no DOB.
+    age_only = {"issuing_authority": "Illinois Secretary of State", "portrait": PORTRAIT_B64, "age_over_21": True}
+    fake.validate_body = {"res": True, "resDetails": json.dumps({"identity": age_only, "authentication": {}})}
+    r = run_b(api).json()
+    assert r["authenticity"]["status"] == "verified"
+    assert r["match"]["band"] == "yellow" and r["match"]["provided_weight"] == 0 and r["match"]["hard_rule"] is None
+    assert r["outcome"] == {"label": "Credential genuine: no name or DOB shared, compare the photo", "color": "yellow"}
+    assert r["portrait_data_url"]
+
+
 def test_flow_b_failed_check_is_red_even_if_names_match(api, fake):
     fake.validate_body = {"res": True, "resDetails": json.dumps(
         {"identity": KOWALSKI, "authentication": {"issuerTrusted": False}})}
@@ -167,3 +178,60 @@ def test_parse_flattens_namespaces_and_flow_a_flat_details():
 def test_get_client_singleton_uses_settings(monkeypatch):
     monkeypatch.setattr(credence_client_module, "_client", None)
     assert credence_client_module.get_client() is credence_client_module.get_client()
+
+
+# ---------- Age Check profile: genuine credential, no name/DOB ----------
+
+AGE_ONLY = {"issuing_authority": "Illinois Secretary of State", "portrait": PORTRAIT_B64, "age_over_21": True}
+
+
+def age_only_result(api, fake) -> dict:
+    fake.validate_body = {"res": True, "resDetails": json.dumps({"identity": AGE_ONLY, "authentication": {}})}
+    return run_b(api).json()
+
+
+def test_age_check_result_exposes_attributes_and_no_match_source(api, fake):
+    r = age_only_result(api, fake)
+    assert r["attributes"] == {"age_over_21": True}
+    assert r["match_source"] == "none" and r["authenticity"]["issuer"] == "Illinois Secretary of State"
+
+
+def test_supplement_with_id_details_scores_and_labels_honestly(api, fake):
+    r = age_only_result(api, fake)
+    s = api.post("/api/verify/digital/supplement", json={
+        "result_id": r["id"], "photo_checked": True, "first_name": "Bob", "last_name": "Kowalski",
+        "dob": "1971-04-12"}).json()
+    assert s["match_source"] == "id_details" and s["supplements"] == r["id"]
+    assert s["authenticity"]["status"] == "verified" and s["match"]["band"] == "green"
+    assert s["outcome"] == {"label": "Credential genuine + photo confirmed; ID details match record", "color": "green"}
+    assert not s["outcome"]["label"].startswith("Verified")  # never the wallet-attested label
+    entry = api.post("/api/audit", json={"result_id": s["id"], "notes": "ok"}).json()
+    assert entry["match_source"] == "id_details" and entry["photo_checked"] is True
+    assert ",id_details," in api.get("/api/audit/export.csv").content.decode("utf-8-sig")
+    assert api.get("/api/audit/verify-chain").json()["ok"] is True
+
+
+def test_supplement_wrong_person_is_red(api, fake):
+    r = age_only_result(api, fake)
+    s = api.post("/api/verify/digital/supplement", json={
+        "result_id": r["id"], "photo_checked": True, "first_name": "Grace", "last_name": "Lee",
+        "dob": "1977-01-29"}).json()
+    assert s["outcome"]["color"] == "red" and "don't match" in s["outcome"]["label"]
+
+
+def test_supplement_requires_photo_and_eligible_result(api, fake):
+    r = age_only_result(api, fake)
+    body = {"result_id": r["id"], "photo_checked": False, "last_name": "Kowalski", "dob": "1971-04-12"}
+    assert api.post("/api/verify/digital/supplement", json=body).status_code == 422
+    # A result that already has a wallet-attested match can't be "supplemented".
+    fake.validate_body = {"res": True, "resDetails": json.dumps({"identity": KOWALSKI, "authentication": {}})}
+    full = run_b(api).json()
+    body.update(result_id=full["id"], photo_checked=True)
+    res = api.post("/api/verify/digital/supplement", json=body)
+    assert res.status_code == 409 and res.json()["error"]["code"] == "not_supplementable"
+
+
+def test_age_check_result_saved_directly_records_photo_confirmation(api, fake):
+    r = age_only_result(api, fake)
+    entry = api.post("/api/audit", json={"result_id": r["id"], "photo_checked": True}).json()
+    assert entry["photo_checked"] is True and entry["match_source"] == "none"

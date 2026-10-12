@@ -73,6 +73,7 @@ def verify_manual(body: ManualVerifyRequest, session: Session = Depends(get_sess
         outcome=OutcomeOut(label=label, color=color),
         photo_checked=True,
         presented_ssn_masked=mask_ssn(body.ssn),
+        match_source="manual",
     )
     results.put(result)
     return result

@@ -1,4 +1,5 @@
 """FieldVerify API entry point."""
+import mimetypes
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -10,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from app.config import REPO_ROOT, settings
 from app.credence.client import get_client
 from app.db import init_db
-from app.routers import audit, providers, verify_digital, verify_manual, visits
+from app.routers import audit, demo, providers, verify_digital, verify_manual, visits
 from app.seed import ensure_seeded
 
 
@@ -20,6 +21,9 @@ async def lifespan(_: FastAPI):
     ensure_seeded()  # Render's free disk is wiped on each deploy, so seed if empty
     yield
 
+
+# Browsers stream-compile WebAssembly only when it's served as application/wasm (license barcode decoder).
+mimetypes.add_type("application/wasm", ".wasm")
 
 app = FastAPI(title="FieldVerify API", version="0.2.0", lifespan=lifespan)
 
@@ -58,6 +62,7 @@ app.include_router(providers.router)
 app.include_router(verify_manual.router)
 app.include_router(verify_digital.router)
 app.include_router(audit.router)
+app.include_router(demo.router)
 
 # Demo/production mode: serve the built web app from the same origin as the API,
 # so the page origin matches the domain registered with Credence.
