@@ -197,6 +197,16 @@ Not yet observed on a device (keep in mind when debugging): whether `onVerificat
 stage error, whether cancelling the coroutine tears down the SDK's NFC/BLE session, and the exact QR text format
 (the app accepts text starting with `mdoc:`).
 
+## 8c. Test wallet and demo records
+
+- Test holder: **Multipaz Test App** (https://apps.multipaz.org). Document Store → "Create Test Documents in Software
+  Secure Area". Its driving licenses are all the same synthetic person: **Erika Mustermann, 1971-09-01**, issued by
+  "Utopia Department of Motor Vehicles" (`SampleData.kt` in the Multipaz repo). No custom names.
+- Present by NFC from the start screen, or "ISO mdoc Proximity Sharing" → "Present mDL via QR".
+- Seeded visits for that ID (backend/app/seed.py): **Erika Mustermann** → green; **Erica Musterman** (misspelled
+  enrollment, same DOB) → yellow, score 73; any other visit (e.g. Robert Kowalski) → red "different person".
+- Its issuer certificate is a test one: expect `issuer_trusted=false` unless added to Credence Trust Management.
+
 ## 9. How to re-verify an SDK fact
 
 ```bash
@@ -209,17 +219,18 @@ javap -public -cp . com.credenceid.tap2idSdk.core.model.VerificationResult
 
 - Evaluation license for **`com.fieldverify.reader`** (Android, In-person SDK) → `TAP2ID_API_KEY` in `.env`; copy to
   `android/local.properties`. Expires 2027-01-07.
-- `LicenseKeyVerificationResult.profileName` tells which Credence profile governs requested fields. **Unknown** for
-  the in-person license (portal shows no profile ID for in-person licenses). If it's an age-check profile, names/DOB
-  may be missing → the backend already handles that (yellow, "compare the photo"; ADR-0007).
+- `LicenseKeyVerificationResult.profileName` tells which Credence profile governs requested fields. Observed Oct 12:
+  **`Age Check Profile 2.0`** (same profile family as the Cloud SDK web flow). Expect issuer + portrait + `age_over_NN`,
+  and probably no name/DOB → the backend returns yellow "compare the photo" and the Result screen offers the
+  "Complete the record check" step (ADR-0007). Confirm the actual fields with the first real read (§7).
 
 ## 11. Open questions (answer on a real device, then record here)
 
 | # | Question | Status |
 |---|---|---|
-| 1 | Does `initSdk` succeed with our key + package, and what `profileName` comes back? | open |
+| 1 | Does `initSdk` succeed with our key + package, and what `profileName` comes back? | **answered Oct 12**: success on an API 37 emulator; `getSdkVersion()` = `2.0.0`, `profileName` = `Age Check Profile 2.0` |
 | 2 | Attribute value types in `VerifiedNamespace.attributes` (String? LocalDate? byte[]?) | open |
-| 3 | Can the candidate's wallet ID (Google Wallet ID pass?) present in person to a Tap2iD reader at all? | open (A1) |
+| 3 | Can the candidate's wallet ID (Google Wallet ID pass?) present in person to a Tap2iD reader at all? | **Oct 12, first try failed**: `NFC_ENGAGEMENT` stage error "Engagement failed … APDU status is: 6A82, expected 9000". 6A82 = ISO 7816 "file or application not found": the other phone answered NFC but has no mdoc engagement app selected (wallet not presenting, or that ID/wallet doesn't support in-person tap to third-party readers). App + SDK side worked (NFC field up, reader talked to the phone). **Cause confirmed: the second phone had no mobile ID on it.** Plan: install the open-source **Multipaz Test App** (OpenWallet Foundation, APKs at https://apps.multipaz.org) on the second Android phone as a test holder. Its test IACA isn't in Credence's trust list, so expect `issuer_trusted=false` → authenticity failed unless that IACA is added in the portal's Trust Management. |
 | 4 | Which runtime permissions are actually prompted on the test phone's Android version | open |
 | 5 | compileSdk / AGP versions that build cleanly with SDK 2.0.0 | **answered**: §3 |
 

@@ -181,8 +181,7 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
 
 - [x] **A2–A4 code** — done Oct 12 in `android/` (see `android/README.md`). Builds clean (AGP 8.13.2, compileSdk 36),
   3 JVM unit tests pass. SDK signatures came from the real 2.0.0 artifact (`docs/android/CONTEXT.md`).
-- [ ] **A2 🧑 On the phone: SDK init** — fill `android/local.properties`, set `ANDROID_DEVICE_TOKEN` on Render, run.
-  - Acceptance: the start screen says "Mobile ID reader ready" and shows a profile name (record it in CONTEXT §11 #1).
+- [x] **A2 🧑 SDK init** — done Oct 12 (emulator): license valid, SDK 2.0.0, profile `Age Check Profile 2.0`.
 - [ ] **A3 🧑 On the phone: read the wallet ID** (NFC, else QR).
   - Acceptance: a result screen appears; copy the `adb logcat -s FieldVerify` shape line into CONTEXT §7 / §11 #2.
 - [ ] **A4 🧑 Save** → the row appears in the web audit log with `channel = android`.

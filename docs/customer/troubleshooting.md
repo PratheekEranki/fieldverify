@@ -61,3 +61,14 @@ IT team would need them: **symptom → cause → fix**. Newest first.
 - **Symptom (found in testing):** a typo in the date field returned a 422 whose body included every submitted value.
 - **Cause:** FastAPI's default validation error includes the rejected `input`.
 - **Fix:** a custom handler that reports field names and reasons only. Covered by a test.
+
+## Android reader: "Engagement failed … APDU status is: 6A82, expected 9000" (Oct 12)
+
+- **Seen:** tapping the reader phone on the phone holding the wallet ID; fails at "Connect by NFC".
+- **Meaning:** 6A82 is the ISO 7816 status "file or application not found". The reader's NFC worked and reached the
+  other phone, but that phone did not answer as an ISO 18013-5 mobile ID. Usually the wallet isn't in "present ID"
+  mode, or the wallet/ID type doesn't allow in-person presentation to third-party readers.
+- **Not the cause:** license (init succeeded), app permissions (it got as far as NFC), backend (never called).
+- **Try:** open the ID in the wallet before tapping and keep the screen unlocked; hold back-to-back for 2–3 s; use the
+  QR option if the wallet can show an engagement QR; confirm which wallet and ID type is on the phone.
+

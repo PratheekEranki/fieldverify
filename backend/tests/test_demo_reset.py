@@ -34,5 +34,5 @@ def test_reset_requires_matching_token_and_clears_audit(api, monkeypatch):
     assert api.post("/api/demo/reset", headers={"X-Demo-Reset-Token": "wrong"}).status_code == 403
     assert len(api.get("/api/audit").json()) == 1
     res = api.post("/api/demo/reset", headers={"X-Demo-Reset-Token": "s3cret-token"})
-    assert res.status_code == 200 and res.json()["visits"] == 6
+    assert res.status_code == 200 and res.json()["visits"] == 7
     assert api.get("/api/audit").json() == []

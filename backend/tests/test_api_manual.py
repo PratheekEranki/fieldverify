@@ -33,7 +33,7 @@ def verify(client, **overrides):
 
 def test_visits_list_has_no_sensitive_fields(client):
     visits = client.get("/api/visits").json()
-    assert len(visits) == 6
+    assert len(visits) == 7
     raw = json.dumps(visits)
     assert "ssn" not in raw and "dob" not in raw and RECORD_SSN not in raw
 

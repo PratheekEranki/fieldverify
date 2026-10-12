@@ -120,3 +120,21 @@ def test_saves_to_audit_with_android_channel(api):
     assert (entry["channel"], entry["flow"], entry["authenticity"]) == ("android", "tap2id", "verified")
     assert "Kowalski" not in str(entry["field_results"]) and "1971" not in str(entry)
     assert api.get("/api/audit/verify-chain").json()["ok"] is True
+
+
+def test_multipaz_test_person_matches_green(api):
+    """The Multipaz Test App's sample mDL (Erika Mustermann, 1971-09-01) matches the seeded test provider."""
+    vid = next(v["id"] for v in api.get("/api/visits").json() if v["provider"]["name"] == "Erika Mustermann")
+    ns = {"org.iso.18013.5.1": {"given_name": "Erika", "family_name": "Mustermann", "birth_date": "1971-09-01",
+                                "issuing_authority": "Utopia Department of Motor Vehicles", "age_over_21": True}}
+    r = post(api, vid, [doc(namespaces=ns)]).json()
+    assert r["match"]["band"] == "green" and r["outcome"]["color"] == "green"
+    assert r["authenticity"]["issuer"] == "Utopia Department of Motor Vehicles"
+
+
+def test_multipaz_test_id_at_near_miss_and_wrong_visits(api):
+    """Same test ID: misspelled enrollment record -> yellow; someone else's visit -> red."""
+    ns = {"org.iso.18013.5.1": {"given_name": "Erika", "family_name": "Mustermann", "birth_date": "1971-09-01"}}
+    visits = {v["provider"]["name"]: v["id"] for v in api.get("/api/visits").json()}
+    assert post(api, visits["Erica Musterman"], [doc(namespaces=ns)]).json()["match"]["band"] == "yellow"
+    assert post(api, visits["Robert Kowalski"], [doc(namespaces=ns)]).json()["outcome"]["color"] == "red"

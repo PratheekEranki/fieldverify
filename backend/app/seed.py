@@ -71,11 +71,19 @@ PROVIDERS = [
      "Physician group practice", "limited"),
     ("Grace", "Lee", [], "1977-01-29", "901556677", "1801 Pralle Ln", "St. Charles", "63303",
      "Federally qualified health center", "limited"),
+    # Synthetic person on the sample driving license in the open-source Multipaz Test App (OpenWallet Foundation),
+    # used as a test wallet for the Android reader demo. Name/DOB must match its SampleData exactly.
+    ("Erika", "Mustermann", [], "1971-09-01", "901667788", "2100 Hwy 94 S", "St. Charles", "63303",
+     "Home health agency", "high"),
+    # Near-miss record for the same test ID: first and last name misspelled at enrollment (data-entry errors),
+    # DOB correct. Reading Erika's test ID at this visit lands in yellow (score 73), not green or red.
+    ("Erica", "Musterman", [], "1971-09-01", "901778899", "4400 Mexico Rd", "St. Peters", "63376",
+     "Personal care services", "high"),
 ]
 
 # Visit times today (local time of the server; good enough for a demo schedule).
-VISIT_SLOTS = [time(9, 0), time(10, 30), time(12, 0), time(13, 30), time(15, 0), time(16, 30)]
-VISIT_PROVIDER_INDEXES = [0, 1, 2, 3, 9, 11]  # which seed providers get a visit today
+VISIT_SLOTS = [time(9, 0), time(10, 30), time(12, 0), time(13, 30), time(15, 0), time(16, 30), time(17, 30)]
+VISIT_PROVIDER_INDEXES = [0, 1, 2, 3, 15, 16, 9]  # which seed providers get a visit today (15, 16 = Multipaz test ID)
 
 
 def build_providers() -> list[Provider]:

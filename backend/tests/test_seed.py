@@ -23,11 +23,11 @@ def test_seed_is_idempotent_and_synthetic():
         providers = s.exec(select(Provider)).all()
         visits = s.exec(select(Visit)).all()
 
-    assert len(providers) == 15
-    assert len(visits) == 6
+    assert len(providers) == 17
+    assert len(visits) == 7
     assert all(p.ssn.startswith("9") and len(p.ssn) == 9 for p in providers)
     assert all(npi_is_valid(p.npi) for p in providers)
-    assert len({p.npi for p in providers}) == 15
+    assert len({p.npi for p in providers}) == 17
     assert all(v.scheduled_at.date() == date(2026, 10, 9) for v in visits)
 
 
