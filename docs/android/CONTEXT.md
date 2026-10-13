@@ -288,7 +288,13 @@ authority differs from the first read or the result isn't a Tap2iD result with `
 
 Known limits: no cryptographic link between the two reads (issuer equality is only a sanity check); the second read's
 issuer isn't trust-checked; reader request is unsigned (no reader authentication), which Multipaz accepts because its
-"Configure Reader Identifiers" list is empty. **Untested on devices as of Oct 13 12:05; the app builds.**
+"Configure Reader Identifiers" list is empty.
+
+**Device-tested Oct 13 12:15** (NFC, Multipaz Test App): first NFC attempt hit "Transceive failed" mid-handover, so
+`SecondReader` now retries the tap up to 5 times with reader mode left on. Then the second read returned
+name/DOB, the backend accepted it, and on **Erica Musterman**'s visit it scored **73 / yellow** (last name partial
+0.98, first name partial 0.91, DOB exact), labelled "compared using a second read (not checked by Credence)";
+overall stayed red (untrusted test issuer), as designed. Same run on **Erika Mustermann**: **100 / green** match (all three exact), overall red.
 
 Expected with the Multipaz test ID on Erika's visit: first read red (untrusted test issuer); second read fills
 Erika / Mustermann / 1971-09-01 → match green 100, overall stays red. On a genuine trusted ID the overall would be

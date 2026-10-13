@@ -7,6 +7,7 @@ import android.nfc.Tag
 import android.nfc.tech.IsoDep
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -101,19 +102,38 @@ class SecondReader(context: Context) {
             try {
                 warm.forEach { it.advertise() }
                 status(callback, "Hold the phones back to back…")
-                val isoDep = awaitIsoDep(activity, adapter)
-                val tag = NfcIsoTagAndroid(isoDep, Dispatchers.IO) { }
-                val handover = mdocReaderNfcHandover(
-                    tag = tag,
-                    negotiatedHandoverConnectionMethods = warm.map { it.connectionMethod },
-                    options = MdocReaderNfcHandoverOptions(useNfcV2 = false),
-                ) ?: throw IllegalStateException("The other phone didn't answer as a mobile ID.")
+                // NFC contact often drops mid-handshake (seen Oct 13: "Transceive failed"). Keep reader mode on and
+                // retry on the next tap instead of failing the whole read.
+                var tag: NfcIsoTagAndroid? = null
+                var handover: org.multipaz.mdoc.nfc.MdocReaderNfcHandoverResult? = null
+                var attempt = 0
+                while (handover == null) {
+                    attempt++
+                    val isoDep = awaitIsoDep(activity, adapter)
+                    Log.i(TAG, "Second read: NFC tag found (attempt $attempt), starting handover")
+                    val t = NfcIsoTagAndroid(isoDep, Dispatchers.IO) { }
+                    try {
+                        handover = mdocReaderNfcHandover(
+                            tag = t,
+                            negotiatedHandoverConnectionMethods = warm.map { it.connectionMethod },
+                            options = MdocReaderNfcHandoverOptions(useNfcV2 = false),
+                        ) ?: throw IllegalStateException("The other phone didn't answer as a mobile ID.")
+                        tag = t
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Throwable) {
+                        if (!isContactLost(e) || attempt >= MAX_NFC_ATTEMPTS) throw e
+                        Log.w(TAG, "Second read: NFC contact lost on attempt $attempt, waiting for another tap")
+                        status(callback, "Lost contact. Hold the phones together again and keep them still…")
+                    }
+                }
                 val method = handover.connectionMethods.firstOrNull { it is MdocConnectionMethodBle }
                     ?: handover.connectionMethods.firstOrNull()
                     ?: throw IllegalStateException("The wallet offered no way to send the data.")
+                Log.i(TAG, "Second read: handover ${handover.type}, methods=${handover.connectionMethods}, using $method")
                 chosen = warm.firstOrNull { it.connectionMethod == method }
                     ?: MdocTransportFactory.Default.createTransport(method, MdocRole.MDOC_READER, MdocTransportOptions())
-                if (chosen is NfcTransportMdocReader) chosen.setTag(tag)
+                if (chosen is NfcTransportMdocReader) chosen.setTag(tag!!)
                 warm.filter { it !== chosen }.forEach { runCatching { it.close() } }
                 adapter.disableReaderMode(activity)
                 status(callback, "Connected. You can separate the phones; the provider approves on their phone…")
@@ -248,12 +268,31 @@ class SecondReader(context: Context) {
             cont.invokeOnCancellation { runCatching { adapter.disableReaderMode(activity) } }
         }
 
-    private fun status(callback: Callback, message: String) = main.post { callback.onStatus(message) }
+    private fun status(callback: Callback, message: String) {
+        Log.i(TAG, "Second read: $message")
+        main.post { callback.onStatus(message) }
+    }
 
-    private fun deliver(callback: Callback, result: Result) = main.post { callback.onResult(result) }
+    private fun deliver(callback: Callback, result: Result) {
+        // Shape and checks only, never values.
+        Log.i(TAG, "Second read result: doc=${result.docType} issuerSigned=${result.issuerSignedValid} " +
+            "deviceSigned=${result.deviceSignedValid} digests=${result.digestsValid} validNow=${result.validNow} " +
+            "given=${result.givenName != null} family=${result.familyName != null} dob=${result.birthDate != null} " +
+            "issuer=${result.issuingAuthority != null} dn=${result.issuerDn}")
+        main.post { callback.onResult(result) }
+    }
+
+    private fun isContactLost(t: Throwable): Boolean =
+        t is java.io.IOException || t is org.multipaz.nfc.NfcTagLostException ||
+            t.message?.contains("Transceive failed") == true || t.message?.contains("Tag was lost") == true
 
     private fun fail(callback: Callback, t: Throwable) {
-        val message = t.message?.takeIf { it.isNotBlank() } ?: t.javaClass.simpleName
+        Log.w(TAG, "Second read failed", t)
+        val message = if (isContactLost(t)) {
+            "The phones lost contact. Tap again and keep them still until it says Connected, or use the QR option."
+        } else {
+            t.message?.takeIf { it.isNotBlank() } ?: t.javaClass.simpleName
+        }
         main.post { callback.onError(message) }
     }
 
@@ -261,5 +300,7 @@ class SecondReader(context: Context) {
         const val MDL_DOC_TYPE = "org.iso.18013.5.1.mDL"
         const val MDL_NAMESPACE = "org.iso.18013.5.1"
         const val READER_NAME = "multipaz-0.101.0"
+        private const val MAX_NFC_ATTEMPTS = 5
+        private const val TAG = "FieldVerify"
     }
 }
