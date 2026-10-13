@@ -189,16 +189,43 @@ hardware, and any federal SSN verification service (not available for this use).
 
 ## How this was built
 
-I built FieldVerify for a five-day take-home, starting with the backend so the web app and Android reader would use
-the same provider records, matching rules and audit log. The main path uses Credence's Cloud SDK in the browser; the
-Android reader uses Tap2iD. I kept credential authenticity separate from the match against an enrollment record:
-a genuine credential can still share too little information, or the details can fail to match. In those cases the
-app says what was checked and where the comparison details came from instead of calling every successful-looking
-match “verified.”
+I had five days, so I started with the part both clients would depend on: the backend. It owns the provider and visit
+records, the scoring rules, the result labels and the audit log. The browser and Android app call that same API
+instead of maintaining their own versions of the business rules. The database is seeded with fictional providers
+because I don't have access to a state's enrollment system; connecting a real MMIS or provider-enrollment service is
+outside this prototype.
 
-I used **Claude (Anthropic) as my AI coding agent**. It wrote most of the code and tests and helped draft the
-documentation; I chose the scope and design, set up the Credence and Render accounts, reviewed the implementation,
-and tested the flows. The web screenshot of a verified mobile ID uses a simulated Credence response. The Android
-read was tested on two phones with the Multipaz test wallet, whose issuer is not trusted by this demo, so it is not
-evidence that my own wallet ID was verified. The important design choices and the issues found while testing are
-recorded in the [architecture decisions](docs/decisions/) and [troubleshooting log](docs/customer/troubleshooting.md).
+For a manual check, the auditor enters the details from a physical ID or scans its PDF417 barcode. The backend
+normalizes names and addresses, accounts for nicknames and common entry mistakes, and scores each field against the
+selected provider record. The score is useful, but it is not proof of identity: manual results are always labelled
+as a record match, never as cryptographic verification. I kept the two signals separate throughout the API and UI.
+That distinction also handles the less convenient cases honestly—for example, a genuine wallet credential may pass
+its authenticity checks but not share the name or date of birth needed for a record match.
+
+The web flow sends the wallet presentation to Credence's Cloud SDK for verification. I kept the Cloud SDK license
+key on the backend rather than putting it in the web bundle. If the profile returns usable name and date-of-birth
+claims, the backend compares them with the enrollment record; if it doesn't, the auditor can compare the credential
+photo and complete the match from the physical ID. The Android app is a second client: Tap2iD reads the credential
+on the auditor's phone and sends its individual check results to the backend, which decides the authenticity result.
+The optional second read for name and date of birth is a separate, weaker source—not a Tap2iD check—so it is labelled
+as such and capped at yellow.
+
+I also wanted the record of a visit to be useful after the auditor leaves. Saving a result adds an entry to an
+append-only audit log; a SHA-256 hash chain makes later edits detectable, and the log can be filtered and exported
+as CSV. Sensitive inputs are handled separately from that record: the manual SSN is compared in memory, validation
+errors don't echo submitted values, and the audit entry keeps field outcomes rather than raw SSN, date of birth or
+portrait.
+
+I used **Claude (Anthropic) as my AI coding agent**. It wrote most of the implementation and tests and helped draft
+the documentation. I set the scope and made the product and design decisions, configured Credence and Render,
+reviewed the code, and tested the flows. Testing changed the plan in a few places: the available Age Check profile
+didn't provide name or date of birth, so I added the explicitly labelled completion paths; and the Android work
+became a time-boxed second front end rather than a replacement for the web app. The design decisions and issues
+found along the way are in the [architecture decisions](docs/decisions/) and
+[troubleshooting log](docs/customer/troubleshooting.md).
+
+There are limits to what I was able to verify. The web screenshot of a verified mobile ID uses a simulated Credence
+response. I tested the Android reader on two phones with the Multipaz test wallet; its issuer isn't trusted by this
+demo, so that test is not evidence that my own wallet ID was verified. The prototype also uses synthetic enrollment
+data and a shared Android device token, not a production identity or device-attestation setup. I want those
+distinctions to be clear rather than imply that a working prototype is already a production deployment.
