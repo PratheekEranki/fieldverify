@@ -118,6 +118,15 @@ ID_DETAILS_OUTCOMES = {
     "red": ("Credential genuine, but ID details don't match the record: escalate", "red"),
 }
 
+# Android only: name/DOB from a second, open-source read (Multipaz library) after the Tap2iD read. The issuer
+# signature on those fields was checked by that library, not by Credence, and nothing proves both reads were the same
+# credential, so a match is capped at yellow ("confirm") and never reads as verified. See docs/android/CONTEXT.md §12.
+SECOND_READ_OUTCOMES = {
+    "green": ("Credential genuine; second-read name/DOB match record (not checked by Credence): confirm", "yellow"),
+    "yellow": ("Credential genuine; second-read name/DOB partly match: follow up", "yellow"),
+    "red": ("Credential genuine, but second-read name/DOB don't match the record: escalate", "red"),
+}
+
 
 def outcome_for(mode: str, authenticity: str, band: str, nothing_compared: bool = False,
                 match_source: str | None = None) -> tuple[str, str]:
@@ -131,6 +140,8 @@ def outcome_for(mode: str, authenticity: str, band: str, nothing_compared: bool 
         return ("Credential failed verification: escalate", "red")
     if mode == "digital" and match_source == "id_details":
         return ID_DETAILS_OUTCOMES[band]
+    if mode == "digital" and match_source == "second_read":
+        return SECOND_READ_OUTCOMES[band]
     if mode == "digital" and nothing_compared:
         return ("Credential genuine: no name or DOB shared, compare the photo", "yellow")
     return OUTCOMES[(mode, authenticity, band)]

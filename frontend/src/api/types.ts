@@ -59,7 +59,7 @@ export type VerificationResult = {
   attributes: Record<string, boolean>
   // wallet: name/DOB attested by the credential; id_details: taken from the physical ID after a genuine credential;
   // manual: typed/scanned with no credential check; none: nothing compared
-  match_source: 'wallet' | 'id_details' | 'manual' | 'none'
+  match_source: 'wallet' | 'id_details' | 'second_read' | 'manual' | 'none'
   supplements: string | null
   saved: boolean
 }

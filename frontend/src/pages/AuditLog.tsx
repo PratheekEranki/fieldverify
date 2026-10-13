@@ -9,6 +9,7 @@ import { FIELD_LABELS, ResultBadge } from '../components/MatchTable'
 const MATCH_SOURCE_LABELS: Record<string, string> = {
   wallet: 'mobile ID',
   id_details: 'physical ID (after mobile ID)',
+  second_read: 'second read (Android, not checked by Credence)',
   manual: 'typed / scanned',
   none: 'none shared',
 }

@@ -47,6 +47,7 @@
     <string name="source_wallet">compared using data from the mobile ID</string>
     <string name="source_id_details">compared using the printed ID details</string>
     <string name="source_none">nothing to compare yet</string>
+    <string name="source_second_read">compared using a second read (not checked by Credence)</string>
 
     <string name="supplement_heading">Complete the record check</string>
     <string name="supplement_body">This ID was verified as genuine but only shared an age check, not a name or date of birth. Confirm the photo, then enter the name and date of birth printed on the provider\'s ID.</string>
@@ -59,6 +60,11 @@
     <string name="last_name_required">Enter the last name from the ID.</string>
     <string name="dob_format">Enter the date of birth as YYYY-MM-DD.</string>
 
+    <string name="second_read_heading">Get name and date of birth (second read)</string>
+    <string name="second_read_body">Credence\'s age-check profile shared no name or date of birth. A second, separate read with an open-source reader can request them so they can be compared with the record. The provider approves again on their phone. These details are not checked by Credence, so a match is capped at yellow.</string>
+    <string name="second_read_nfc">Second read: tap phones</string>
+    <string name="second_read_qr">Second read: scan wallet QR</string>
+    <string name="second_read_checking">Details received. Checking against the record…</string>
     <string name="save_heading">Save</string>
     <string name="notes_hint">Notes (optional, no ID numbers)</string>
     <string name="save_to_audit">Save to audit log</string>

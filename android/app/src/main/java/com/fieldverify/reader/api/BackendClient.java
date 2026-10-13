@@ -79,6 +79,33 @@ public class BackendClient {
         run(request, Models.VerificationResult.class, cb);
     }
 
+    /**
+     * Name/DOB from the open-source second read (docs/android/CONTEXT.md §12). Sends the second read's own checks;
+     * the backend rejects the details if any failed and never changes the Tap2iD authenticity verdict.
+     */
+    public void secondRead(String resultId, com.fieldverify.reader.reader.SecondReader.Result r,
+                           Callback<Models.VerificationResult> cb) {
+        JsonObject body = new JsonObject();
+        body.addProperty("result_id", resultId);
+        body.addProperty("reader", com.fieldverify.reader.reader.SecondReader.READER_NAME);
+        body.addProperty("doc_type", r.getDocType());
+        body.addProperty("issuer_signed_valid", r.getIssuerSignedValid());
+        body.addProperty("device_signed_valid", r.getDeviceSignedValid());
+        body.addProperty("digests_valid", r.getDigestsValid());
+        body.addProperty("valid_now", r.getValidNow());
+        body.addProperty("issuer_dn", r.getIssuerDn());
+        body.addProperty("issuing_authority", r.getIssuingAuthority());
+        body.addProperty("given_name", r.getGivenName());
+        body.addProperty("family_name", r.getFamilyName());
+        body.addProperty("birth_date", r.getBirthDate());
+        Request request = new Request.Builder()
+                .url(baseUrl + "/api/verify/digital/second-read")
+                .header("X-Device-Token", deviceToken)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+        run(request, Models.VerificationResult.class, cb);
+    }
+
     /** Age-check completion: photo confirmed, name/DOB read off the physical ID (backend ADR-0007). */
     public void supplement(String resultId, boolean photoChecked, String firstName, String lastName, String dobIso,
                            Callback<Models.VerificationResult> cb) {

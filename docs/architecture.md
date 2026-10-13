@@ -102,7 +102,7 @@ fieldverify/
         ├── pages/            # VisitList, Verify, Result, AuditLog
         ├── components/       # OutcomeBanner, AuthenticityPanel, MatchTable, MaskedInput, QrPanel
         └── wallet/           # dcapi.ts (navigator.credentials.get wrapper), polling.ts
-└── android/                  # stretch (ADR-0006); Android Studio project, Java + one Kotlin file
+└── android/                  # ADR-0006/0008; Android Studio project, Java + two thin Kotlin files
     ├── settings.gradle.kts   # adds the Credence Maven repo
     ├── local.properties      # gitignored: TAP2ID_API_KEY, BACKEND_URL, DEVICE_TOKEN
     └── app/src/main/java/com/fieldverify/reader/

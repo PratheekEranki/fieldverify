@@ -77,6 +77,11 @@ public final class Models {
         public String supplements;
         public boolean saved;
 
+        /** In-person Tap2iD read that shared no name/DOB: can be completed with the open-source second read. */
+        public boolean canSecondRead() {
+            return "tap2id".equals(flow) && "none".equals(matchSource);
+        }
+
         /** Genuine credential that shared no name/DOB (age-check profile): finish with the physical ID's details. */
         public boolean needsIdDetails() {
             return "digital".equals(mode) && authenticity != null && "verified".equals(authenticity.status)

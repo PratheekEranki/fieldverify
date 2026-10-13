@@ -270,3 +270,74 @@ def tap2id_outcome(body: Tap2iDRequest) -> DigitalOutcome:
 def tap2id(body: Tap2iDRequest, session: Session = Depends(get_session)) -> VerificationResult:
     visit, provider = load_visit_and_provider(session, body.visit_id)
     return build_digital_result(visit, provider, "tap2id", tap2id_outcome(body), channel="android")
+
+
+# --- Android: second read for name/DOB (open-source Multipaz reader). See docs/android/CONTEXT.md §12. -------------
+
+class SecondReadRequest(BaseModel):
+    """Name/DOB fetched by a second, separate ISO 18013-5 read after the Tap2iD read. Raw facts; the server decides."""
+
+    result_id: str
+    reader: str = Field(default="multipaz", max_length=40)
+    doc_type: str = Field(max_length=200)
+    issuer_signed_valid: bool
+    device_signed_valid: bool
+    digests_valid: bool
+    valid_now: bool
+    issuer_dn: str | None = Field(default=None, max_length=500)
+    issuing_authority: str | None = Field(default=None, max_length=200)
+    given_name: str | None = Field(default=None, max_length=80)
+    family_name: str | None = Field(default=None, max_length=80)
+    birth_date: date | None = None
+
+
+@router.post("/second-read", response_model=VerificationResult, dependencies=[Depends(require_device_token)])
+def second_read(body: SecondReadRequest, session: Session = Depends(get_session)) -> VerificationResult:
+    """Attach name/DOB from a second read to a Tap2iD result that shared none (age-check profile).
+
+    Authenticity stays exactly what the Tap2iD read said. The second read's own integrity checks must all pass, and
+    it must come from the same issuer as the first read (a weak link between the two reads; see CONTEXT.md §12).
+    """
+    original = results.get(body.result_id)
+    if original is None:
+        raise HTTPException(404, detail={"code": "result_not_found",
+                                         "message": "Result not found or expired. Run the verification again."})
+    if not (original.mode == "digital" and original.flow == "tap2id" and original.match_source == "none"):
+        raise HTTPException(409, detail={"code": "not_supplementable",
+                                         "message": "Only an in-person mobile ID read that shared no name or DOB "
+                                                    "can be completed with a second read."})
+    checks = {"issuerSignedValid": body.issuer_signed_valid, "deviceSignedValid": body.device_signed_valid,
+              "digestsValid": body.digests_valid, "validNow": body.valid_now}
+    if not all(checks.values()):
+        failed = ", ".join(k for k, v in checks.items() if not v)
+        raise HTTPException(422, detail={"code": "second_read_failed_checks",
+                                         "message": f"The second read failed its own checks ({failed}); its details "
+                                                    "were not used."})
+    if body.doc_type != MDL_DOC_TYPE:
+        raise HTTPException(422, detail={"code": "second_read_wrong_doc",
+                                         "message": "The second read returned a different kind of document."})
+    first_issuer = (original.authenticity.issuer or "").strip().lower()
+    second_issuer = (body.issuing_authority or "").strip().lower()
+    if first_issuer and second_issuer and first_issuer != second_issuer:
+        raise HTTPException(409, detail={"code": "second_read_different_issuer",
+                                         "message": "The second read came from a different issuer than the first "
+                                                    "read. It may be a different ID; start again."})
+    if not (body.family_name and body.birth_date):
+        raise HTTPException(422, detail={"code": "second_read_no_details",
+                                         "message": "The wallet didn't share a last name and date of birth in the "
+                                                    "second read."})
+    visit, provider = load_visit_and_provider(session, original.visit_id)
+    match = score_identity(Presented(first_name=body.given_name, last_name=body.family_name, dob=body.birth_date),
+                           record_view(provider))
+    label, color = outcome_for("digital", original.authenticity.status, match.band, match_source="second_read")
+    result = original.model_copy(update={
+        "id": str(uuid.uuid4()),
+        "created_at": datetime.now(timezone.utc),
+        "match": match_out(match),
+        "outcome": OutcomeOut(label=label, color=color),
+        "match_source": "second_read",
+        "supplements": original.id,
+        "saved": False,
+    })
+    results.put(result)
+    return result

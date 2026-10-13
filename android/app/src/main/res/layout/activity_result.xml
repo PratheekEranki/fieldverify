@@ -158,6 +158,56 @@
                 android:text="@string/check_details" />
         </LinearLayout>
 
+        <!-- Android only: open-source second read for name/DOB (docs/android/CONTEXT.md §12) -->
+        <LinearLayout
+            android:id="@+id/second_read_section"
+            style="@style/Card"
+            android:visibility="gone">
+
+            <TextView
+                style="@style/Heading"
+                android:text="@string/second_read_heading" />
+
+            <TextView
+                style="@style/Body"
+                android:layout_marginBottom="8dp"
+                android:text="@string/second_read_body" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_second_nfc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/second_read_nfc" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_second_qr"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/second_read_qr" />
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/second_read_progress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:indeterminate="true"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/second_read_status"
+                style="@style/Body"
+                android:layout_marginTop="8dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/second_read_error"
+                style="@style/StatusPill"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_status_red"
+                android:visibility="gone" />
+        </LinearLayout>
+
         <LinearLayout style="@style/Card">
 
             <TextView

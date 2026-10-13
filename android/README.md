@@ -12,7 +12,8 @@ SDK API and the backend contract.
 
 | Path | What it does |
 |---|---|
-| `app/src/main/kotlin/.../reader/Tap2iDVerifier.kt` | The only Kotlin file. Bridges the SDK's `suspend` calls to Java callbacks. |
+| `app/src/main/kotlin/.../reader/Tap2iDVerifier.kt` | Kotlin bridge from the Tap2iD SDK's `suspend` calls to Java callbacks. |
+| `app/src/main/kotlin/.../reader/SecondReader.kt` | Optional second read with the open-source Multipaz library to fetch name and date of birth when the Credence profile shares none (ADR-0008). Not used for the authenticity verdict. |
 | `app/src/main/java/.../reader/Tap2iDPayload.java` | Turns a Tap2iD `VerificationResult` into the backend's JSON. Raw checks only, no verdict. |
 | `app/src/main/java/.../api/BackendClient.java` | OkHttp + Gson client for `/api/visits`, `/api/verify/digital/tap2id`, `/supplement`, `/api/audit`. |
 | `app/src/main/java/.../ui/MainActivity.java` | Today's visits and the reader's license status. |

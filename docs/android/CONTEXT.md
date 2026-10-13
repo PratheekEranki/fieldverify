@@ -16,7 +16,8 @@ A second front end for FieldVerify. The auditor's Android phone reads the provid
 The backend scores it against the enrollment record and writes the audit log. **The app holds no scoring, outcome or
 audit logic.**
 
-- Language: **Java**, plus exactly **one Kotlin file** (`Tap2iDVerifier.kt`) that wraps the SDK's `suspend` functions.
+- Language: **Java**, plus two thin **Kotlin** files: `Tap2iDVerifier.kt` (wraps the Tap2iD SDK's `suspend` functions)
+  and `SecondReader.kt` (the optional open-source second read, §12 / ADR-0008).
 - Package / applicationId: **`com.fieldverify.reader`** (the Tap2iD evaluation license is bound to this exact id).
 - Hard stop: Tue Oct 13, 8:00 PM CT (ADR-0006). If not working end to end, it is not submitted.
 
@@ -26,7 +27,7 @@ audit logic.**
 2. Do **not** copy code from Credence's `Tap2iD-SDK-Android` sample repo (license forbids reuse). Reading it is fine.
 3. Secrets (`TAP2ID_API_KEY`, `DEVICE_TOKEN`) go in `android/local.properties` (gitignored), never in source.
 4. Never log attribute values (names, DOB, portrait). Log keys and types only.
-5. All Java except `Tap2iDVerifier.kt`. Keep that file a thin bridge: no business logic.
+5. All Java except `Tap2iDVerifier.kt` and `SecondReader.kt`. Keep them thin bridges: no scoring or outcome logic.
 6. The app never decides "verified". It sends Credence's raw check results; the backend computes authenticity (§7).
 
 ## 3. Toolchain and dependency facts
@@ -262,9 +263,41 @@ javap -public -cp . com.credenceid.tap2idSdk.core.model.VerificationResult
 | 4 | Which runtime permissions are actually prompted on the test phone's Android version | open |
 | 5 | compileSdk / AGP versions that build cleanly with SDK 2.0.0 | **answered**: §3 |
 
+## 12. Second read for name/DOB (open-source, ADR-0008)
+
+Library: **`org.multipaz:multipaz:0.101.0`** (Maven Central; Kotlin Multiplatform, Android variant
+`multipaz-android`, kotlin-stdlib 2.2.21). APIs below were read from `multipaz-android-0.101.0-sources.jar`, not from
+the GitHub main branch (main has newer APIs such as `VerificationSession`; don't copy from it).
+
+| Need | 0.101.0 API used |
+|---|---|
+| App context | `org.multipaz.context.initializeApplication(applicationContext)` (must run before BLE transports) |
+| NFC tag | Android `NfcAdapter.enableReaderMode` → `IsoDep` → `NfcIsoTagAndroid(isoDep, Dispatchers.IO) { }` (public). The library's own `NfcTagReader.scan` needs its Compose prompt UI, so it's not used |
+| NFC handover | `mdocReaderNfcHandover(tag, negotiatedHandoverConnectionMethods, MdocReaderNfcHandoverOptions(useNfcV2 = false))` → `encodedDeviceEngagement`, `handover`, `connectionMethods` |
+| QR engagement | `"mdoc:" + base64url(DeviceEngagement)`; handover = `Simple.NULL`; `MdocConnectionMethod.disambiguate(…, MdocRole.MDOC_READER)` |
+| Transport | `MdocTransportFactory.Default.createTransport(method, MdocRole.MDOC_READER, MdocTransportOptions())`; `advertise()`, `open(eDeviceKey)`, `sendMessage`, `waitForMessage`, `close()` |
+| Session | `SessionTranscript = [24(DeviceEngagement), 24(EReaderKey COSE), handover]`; `SessionEncryption(MdocRole.MDOC_READER, eReaderKey, eDeviceKey, transcript)`; `encryptMessage(msg, null)`, `decryptMessage(data)` → `(ByteArray?, Long?)` |
+| Request | `DeviceRequestGenerator(transcript).addDocumentRequest(docType, itemsToRequest, null, null, Algorithm.UNSET, null).generate()` (unsigned request) |
+| Response | `DeviceResponseParser(bytes, transcript).setEphemeralReaderKey(AsymmetricKey.anonymous(eReaderKey)).parse()` → `documents[0]`: `issuerSignedAuthenticated`, `deviceSignedAuthenticated`, `numIssuerEntryDigestMatchFailures`, `validityInfoValidFrom/Until`, `issuerCertificateChain`, `getIssuerEntryData(ns, name)` (CBOR; `birth_date` via `asDateStringOrDateTimeString`) |
+
+Backend: `POST /api/verify/digital/second-read` (`X-Device-Token`). Body: `result_id`, `reader`, `doc_type`,
+`issuer_signed_valid`, `device_signed_valid`, `digests_valid`, `valid_now`, `issuer_dn`, `issuing_authority`,
+`given_name`, `family_name`, `birth_date`. Rejects (422) if any check is false or name/DOB missing; 409 if the issuing
+authority differs from the first read or the result isn't a Tap2iD result with `match_source="none"`. Result:
+`match_source="second_read"`, outcome capped at yellow, authenticity unchanged. Tests: `backend/tests/test_second_read.py`.
+
+Known limits: no cryptographic link between the two reads (issuer equality is only a sanity check); the second read's
+issuer isn't trust-checked; reader request is unsigned (no reader authentication), which Multipaz accepts because its
+"Configure Reader Identifiers" list is empty. **Untested on devices as of Oct 13 12:05; the app builds.**
+
+Expected with the Multipaz test ID on Erika's visit: first read red (untrusted test issuer); second read fills
+Erika / Mustermann / 1971-09-01 → match green 100, overall stays red. On a genuine trusted ID the overall would be
+yellow ("not checked by Credence: confirm").
+
 ## Sources
 - Android API reference: https://credenceid.com/mobile-id/developer-documentation/tap2id/android/using-the-sdk/
 - Android integration: https://credenceid.com/mobile-id/developer-documentation/tap2id/android/integration/
 - Artifact + POM: `https://nexus.credenceid.com/repository/credenceid-sdk-group/com/credenceid/tap2idSdk/2.0.0/`
 - Identity library manifest: `.../com/credenceid/c-identity-android/2.0.0-Sdk/c-identity-android-2.0.0-Sdk.aar`
-- FieldVerify decisions: `docs/decisions/0006-one-backend-two-front-ends.md`, `0007-age-check-profile-completion.md`
+- FieldVerify decisions: `docs/decisions/0006-one-backend-two-front-ends.md`, `0007-age-check-profile-completion.md`, `0008-android-second-read.md`
+- Multipaz 0.101.0 sources: `https://repo1.maven.org/maven2/org/multipaz/multipaz-android/0.101.0/multipaz-android-0.101.0-sources.jar`

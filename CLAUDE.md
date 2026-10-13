@@ -68,8 +68,8 @@ Load only what the current task needs. Don't read the whole repo for a small cha
 
 - Backend: Python 3.11+, FastAPI, SQLModel (SQLite), httpx, pytest. Lives in `backend/`.
 - Web front end: React 18 + TypeScript + Vite. Lives in `frontend/`.
-- Android front end: **Java**, plus exactly one Kotlin file wrapping the SDK's suspend functions
-  (`Tap2iDVerifier.kt`). AGP 8.13.2, Gradle 8.14.3, compileSdk 36, minSdk 29, Tap2iD SDK 2.0.0. Lives in
+- Android front end: **Java**, plus two thin Kotlin files for `suspend` APIs: `Tap2iDVerifier.kt` (Credence SDK) and
+  `SecondReader.kt` (open-source second read, ADR-0008). AGP 8.13.2, Gradle 8.14.3, compileSdk 36, minSdk 29, Tap2iD SDK 2.0.0. Lives in
   `android/`. **Read `docs/android/CONTEXT.md` first**; never use SDK APIs that aren't listed there.
 
 The human is on **Windows** (PowerShell). Give commands that work there.

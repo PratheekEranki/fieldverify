@@ -14,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
@@ -21,6 +22,10 @@ import com.fieldverify.reader.FieldVerifyApp;
 import com.fieldverify.reader.R;
 import com.fieldverify.reader.api.BackendClient;
 import com.fieldverify.reader.api.Models;
+import com.fieldverify.reader.reader.SecondReader;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.journeyapps.barcodescanner.ScanContract;
+import com.journeyapps.barcodescanner.ScanOptions;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -36,6 +41,20 @@ public class ResultActivity extends BaseActivity {
 
     private FieldVerifyApp app;
     private Models.VerificationResult result;
+    private SecondReader secondReader;
+
+    private final ActivityResultLauncher<ScanOptions> secondQrLauncher = registerForActivityResult(
+            new ScanContract(), scan -> {
+                String text = scan.getContents();
+                if (text == null) {
+                    return; // scanner cancelled
+                }
+                if (!text.startsWith("mdoc:")) {
+                    showSecondReadError(getString(R.string.not_mdoc_qr));
+                    return;
+                }
+                startSecondRead(false, text);
+            });
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -49,7 +68,21 @@ public class ResultActivity extends BaseActivity {
         findViewById(R.id.button_supplement).setOnClickListener(v -> submitSupplement());
         findViewById(R.id.button_save).setOnClickListener(v -> save());
         findViewById(R.id.button_done).setOnClickListener(v -> backToVisits());
+        findViewById(R.id.button_second_nfc).setOnClickListener(v -> startSecondRead(true, null));
+        findViewById(R.id.button_second_qr).setOnClickListener(v -> secondQrLauncher.launch(new ScanOptions()
+                .setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                .setPrompt(getString(R.string.scan_prompt))
+                .setBeepEnabled(false)
+                .setOrientationLocked(false)));
         render();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (secondReader != null) {
+            secondReader.cancel();
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -119,7 +152,8 @@ public class ResultActivity extends BaseActivity {
             addRow(fields, getString(R.string.cap_label), "", cap);
         }
 
-        // Age-check completion and save
+        // Age-check completion (second read, or details typed from the physical ID) and save
+        findViewById(R.id.second_read_section).setVisibility(result.canSecondRead() ? View.VISIBLE : View.GONE);
         findViewById(R.id.supplement_section).setVisibility(result.needsIdDetails() ? View.VISIBLE : View.GONE);
         boolean photoAlreadyConfirmed = Boolean.TRUE.equals(result.photoChecked);
         findViewById(R.id.save_photo_check).setVisibility(
@@ -210,12 +244,77 @@ public class ResultActivity extends BaseActivity {
                 });
     }
 
+    /** Open-source second read for name/DOB (docs/android/CONTEXT.md §12). NFC when {@code nfc}, else QR text. */
+    private void startSecondRead(boolean nfc, @Nullable String qrText) {
+        if (secondReader == null) {
+            secondReader = new SecondReader(this);
+        }
+        setSecondReadBusy(true);
+        findViewById(R.id.second_read_error).setVisibility(View.GONE);
+        SecondReader.Callback cb = new SecondReader.Callback() {
+            @Override
+            public void onStatus(String message) {
+                TextView status = findViewById(R.id.second_read_status);
+                status.setText(message);
+                status.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onResult(SecondReader.Result r) {
+                onStatus(getString(R.string.second_read_checking));
+                app.backend().secondRead(result.id, r, new BackendClient.Callback<Models.VerificationResult>() {
+                    @Override
+                    public void onSuccess(Models.VerificationResult value) {
+                        setSecondReadBusy(false);
+                        result = value;
+                        render();
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        showSecondReadError(message);
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String message) {
+                showSecondReadError(message);
+            }
+        };
+        if (nfc) {
+            secondReader.readWithNfc(this, cb);
+        } else {
+            secondReader.readWithQr(qrText, cb);
+        }
+    }
+
+    private void setSecondReadBusy(boolean busy) {
+        LinearProgressIndicator progress = findViewById(R.id.second_read_progress);
+        progress.setVisibility(busy ? View.VISIBLE : View.GONE);
+        findViewById(R.id.button_second_nfc).setEnabled(!busy);
+        findViewById(R.id.button_second_qr).setEnabled(!busy);
+        if (!busy) {
+            findViewById(R.id.second_read_status).setVisibility(View.GONE);
+        }
+    }
+
+    private void showSecondReadError(String message) {
+        setSecondReadBusy(false);
+        TextView error = findViewById(R.id.second_read_error);
+        error.setText(message);
+        error.setVisibility(View.VISIBLE);
+    }
+
     private String sourceLabel(String source) {
         if ("wallet".equals(source)) {
             return getString(R.string.source_wallet);
         }
         if ("id_details".equals(source)) {
             return getString(R.string.source_id_details);
+        }
+        if ("second_read".equals(source)) {
+            return getString(R.string.source_second_read);
         }
         return getString(R.string.source_none);
     }

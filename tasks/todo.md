@@ -183,8 +183,12 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
   3 JVM unit tests pass. SDK signatures came from the real 2.0.0 artifact (`docs/android/CONTEXT.md`).
 - [x] **A2 🧑 SDK init** — done Oct 12 (emulator): license valid, SDK 2.0.0, profile `Age Check Profile 2.0`.
 - [x] **A3 🧑 Read a mobile ID** — done Oct 13 with the Multipaz test ID over NFC; result returned from Render (red: untrusted test issuer, expected).
-- [ ] **A4 🧑 Save** → the row appears in the web audit log with `channel = android`.
+- [x] **A4 🧑 Save** — done Oct 13: audit entry #1 on Render = Erika Mustermann, digital / android / tap2id, authenticity failed (untrusted test issuer), band yellow; hash chain verifies.
 
+- [x] **A6 code: second read for name/DOB** — done Oct 13 (ADR-0008): `SecondReader.kt` (Multipaz 0.101.0),
+  `POST /api/verify/digital/second-read` (+10 tests, 112 total), web labels. Builds; **not yet run on phones**.
+- [ ] **A6 🧑 Test the second read** on Erika's visit: first read (red, untrusted) → "Second read: tap phones" (or QR)
+  → approve (1111 + fingerprint) → match green 100, overall stays red. Then save; audit shows "second read".
 - [ ] **A5 🧑 Go/no-go** (S): three clean end-to-end runs before 8:00 PM CT. Pass → include in README and demo.
   Fail → remove from README and demo; it's a "phase 2" slide.
 

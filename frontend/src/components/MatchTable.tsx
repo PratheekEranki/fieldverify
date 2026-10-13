@@ -40,6 +40,12 @@ export function MatchTable({ result }: { result: VerificationResult }) {
           profile shares no name or date of birth.
         </p>
       )}
+      {result.match_source === 'second_read' && (
+        <p className="note note-yellow">
+          Name and date of birth came from a second, separate read of the mobile ID (open-source reader), not from the
+          Credence check. A match here is capped at yellow.
+        </p>
+      )}
       {result.match_source === 'wallet' && <p className="small muted">Name and date of birth attested by the mobile ID.</p>}
       {match.hard_rule && <p className="note note-red">Rule applied: {match.hard_rule}</p>}
       {match.provided_weight > 0 && match.caps.map((c) => (

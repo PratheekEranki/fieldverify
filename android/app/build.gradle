@@ -61,6 +61,9 @@ kotlin {
 
 dependencies {
     implementation 'com.credenceid:tap2idSdk:2.0.0'
+    // Open-source ISO 18013-5 reader (OpenWallet Foundation), used ONLY for the optional second read that fetches
+    // name/DOB when the Tap2iD profile shares none. Never used for the authenticity verdict. CONTEXT.md §12.
+    implementation 'org.multipaz:multipaz:0.101.0'
 
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'com.google.android.material:material:1.13.0'

@@ -91,7 +91,8 @@ class VerificationResult(BaseModel):
     portrait_data_url: str | None = None  # digital only; held in memory for the result screen, never logged
     attributes: dict[str, bool] = {}  # e.g. {"age_over_21": true} shared by an age-check profile
     # Where the compared name/DOB came from: wallet (cryptographically attested), id_details (physical ID after a
-    # genuine credential), manual (typed/scanned, no credential check), none (nothing to compare).
+    # genuine credential), second_read (Android: open-source second read after Tap2iD), manual (typed/scanned, no
+    # credential check), none (nothing to compare).
     match_source: str = "none"
     supplements: str | None = None  # id of the digital result this one completes
     saved: bool = False
