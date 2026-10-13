@@ -182,8 +182,7 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
 - [x] **A2–A4 code** — done Oct 12 in `android/` (see `android/README.md`). Builds clean (AGP 8.13.2, compileSdk 36),
   3 JVM unit tests pass. SDK signatures came from the real 2.0.0 artifact (`docs/android/CONTEXT.md`).
 - [x] **A2 🧑 SDK init** — done Oct 12 (emulator): license valid, SDK 2.0.0, profile `Age Check Profile 2.0`.
-- [ ] **A3 🧑 On the phone: read the wallet ID** (NFC, else QR).
-  - Acceptance: a result screen appears; copy the `adb logcat -s FieldVerify` shape line into CONTEXT §7 / §11 #2.
+- [x] **A3 🧑 Read a mobile ID** — done Oct 13 with the Multipaz test ID over NFC; result returned from Render (red: untrusted test issuer, expected).
 - [ ] **A4 🧑 Save** → the row appears in the web audit log with `channel = android`.
 
 - [ ] **A5 🧑 Go/no-go** (S): three clean end-to-end runs before 8:00 PM CT. Pass → include in README and demo.

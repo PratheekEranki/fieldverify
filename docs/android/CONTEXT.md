@@ -152,8 +152,21 @@ Chosen document: the first with `docType == "org.iso.18013.5.1.mDL"`, else the f
 `String` → as is, `java.time.LocalDate` / `LocalDateTime` → ISO string, `byte[]` → base64, `Boolean`/`Number` → JSON
 scalar, anything else → `toString()`. The backend already normalizes namespaced maps and ISO/AAMVA names.
 
-**First real result:** log `docType`, namespace names, attribute **keys and value classes only** (never values), and
-record them here.
+**First real result (Oct 13, NFC, Multipaz Test App → Erika's visit on Render):** end to end worked. Checks:
+issuerSigned ✓, deviceSigned ✓, digests ✓, MSO valid ✓, no validation errors ✓, **issuerTrusted ✗, chain ✗** (Multipaz
+test IACA "C=US,CN=OWF Multipaz TEST IACA" is not in Credence's trust list) → backend "failed" → red "Credential failed
+verification: escalate". Shared: `issuing_authority` ("Utopia Department of Motor Vehicles"). Not shared: name, DOB
+(Age Check Profile 2.0). Portrait and `age_over_21` did not show at first; the logcat shape line explained why:
+
+```
+Tap2iD result shape: status=PARTIAL_SUCCESS | doc=org.iso.18013.5.1.mDL auth=WARNING
+  ns=org.iso.18013.5.1 {issuing_authority:String portrait:Bitmap age_over_21:AgeOverPossibleValues }
+```
+- `portrait` is an **`android.graphics.Bitmap`** (not `byte[]`) → the app now JPEG-encodes it (quality 90) → base64.
+- `age_over_NN` is **`com.credenceid.identity.iso18013.AgeOverPossibleValues`**, an enum `{NOT_RETRIEVED, FALSE, TRUE}`
+  (in `c-identity`) → the app maps TRUE/FALSE to JSON booleans, NOT_RETRIEVED to null (matched by enum name).
+- With an untrusted issuer the SDK reports `status=PARTIAL_SUCCESS` and `AuthenticationStatus.WARNING`.
+- "Transceive failed" at NFC_ENGAGEMENT = the NFC link dropped (phones moved); hold still until stages finish.
 
 ## 8. Backend contract (implemented in `backend/app/routers/verify_digital.py`)
 
@@ -203,9 +216,13 @@ stage error, whether cancelling the coroutine tears down the SDK's NFC/BLE sessi
   Secure Area". Its driving licenses are all the same synthetic person: **Erika Mustermann, 1971-09-01**, issued by
   "Utopia Department of Motor Vehicles" (`SampleData.kt` in the Multipaz repo). No custom names.
 - Present by NFC from the start screen, or "ISO mdoc Proximity Sharing" → "Present mDL via QR".
+- When sharing, the holder phone asks for the document PIN: **1111** (hardcoded for Software Secure Area test
+  documents in `DocumentStoreScreen.kt`: `setPassphraseRequired(true, "1111", PIN_FOUR_DIGITS)`).
 - Seeded visits for that ID (backend/app/seed.py): **Erika Mustermann** → green; **Erica Musterman** (misspelled
   enrollment, same DOB) → yellow, score 73; any other visit (e.g. Robert Kowalski) → red "different person".
-- Its issuer certificate is a test one: expect `issuer_trusted=false` unless added to Credence Trust Management.
+- Its issuer certificate is a test one: expect `issuer_trusted=false` unless added to Credence Trust Management. The IACA
+  key is bundled but the certificate is generated on first launch (random serial, `App.kt` `iacaInit`), so it must be
+  exported from that phone to be trusted; there is no fixed file to upload.
 
 ## 9. How to re-verify an SDK fact
 
@@ -229,7 +246,7 @@ javap -public -cp . com.credenceid.tap2idSdk.core.model.VerificationResult
 | # | Question | Status |
 |---|---|---|
 | 1 | Does `initSdk` succeed with our key + package, and what `profileName` comes back? | **answered Oct 12**: success on an API 37 emulator; `getSdkVersion()` = `2.0.0`, `profileName` = `Age Check Profile 2.0` |
-| 2 | Attribute value types in `VerifiedNamespace.attributes` (String? LocalDate? byte[]?) | open |
+| 2 | Attribute value types in `VerifiedNamespace.attributes` (String? LocalDate? byte[]?) | **answered Oct 13** (§7): String, `Bitmap` (portrait), `AgeOverPossibleValues` enum (age_over_NN). Name/DOB types still unseen (not shared by the Age Check profile). |
 | 3 | Can the candidate's wallet ID (Google Wallet ID pass?) present in person to a Tap2iD reader at all? | **Oct 12, first try failed**: `NFC_ENGAGEMENT` stage error "Engagement failed … APDU status is: 6A82, expected 9000". 6A82 = ISO 7816 "file or application not found": the other phone answered NFC but has no mdoc engagement app selected (wallet not presenting, or that ID/wallet doesn't support in-person tap to third-party readers). App + SDK side worked (NFC field up, reader talked to the phone). **Cause confirmed: the second phone had no mobile ID on it.** Plan: install the open-source **Multipaz Test App** (OpenWallet Foundation, APKs at https://apps.multipaz.org) on the second Android phone as a test holder. Its test IACA isn't in Credence's trust list, so expect `issuer_trusted=false` → authenticity failed unless that IACA is added in the portal's Trust Management. |
 | 4 | Which runtime permissions are actually prompted on the test phone's Android version | open |
 | 5 | compileSdk / AGP versions that build cleanly with SDK 2.0.0 | **answered**: §3 |

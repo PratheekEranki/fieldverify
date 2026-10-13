@@ -10,6 +10,9 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
+import android.graphics.Bitmap;
+
+import java.io.ByteArrayOutputStream;
 import java.time.temporal.TemporalAccessor;
 import java.util.Base64;
 import java.util.Date;
@@ -82,6 +85,25 @@ public final class Tap2iDPayload {
         if (v instanceof Number) {
             return new JsonPrimitive((Number) v);
         }
+        if (v instanceof Bitmap) {
+            // Observed Oct 13: the SDK delivers `portrait` as an android.graphics.Bitmap, not JPEG bytes.
+            return new JsonPrimitive(Base64.getEncoder().encodeToString(jpeg((Bitmap) v)));
+        }
+        if (v instanceof Enum) {
+            // Observed Oct 13: `age_over_NN` arrives as com.credenceid.identity.iso18013.AgeOverPossibleValues
+            // {TRUE, FALSE, NOT_RETRIEVED}. Matched by name so we don't compile against the SDK's internal library.
+            String name = ((Enum<?>) v).name();
+            if ("TRUE".equals(name)) {
+                return new JsonPrimitive(true);
+            }
+            if ("FALSE".equals(name)) {
+                return new JsonPrimitive(false);
+            }
+            if ("NOT_RETRIEVED".equals(name)) {
+                return JsonNull.INSTANCE;
+            }
+            return new JsonPrimitive(name);
+        }
         if (v instanceof byte[]) {
             return new JsonPrimitive(Base64.getEncoder().encodeToString((byte[]) v));
         }
@@ -106,6 +128,12 @@ public final class Tap2iDPayload {
             return arr;
         }
         return new JsonPrimitive(v.toString());
+    }
+
+    private static byte[] jpeg(Bitmap bitmap) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+        return out.toByteArray();
     }
 
     /** For logcat: document types, namespaces, attribute keys and value classes. Never attribute values. */

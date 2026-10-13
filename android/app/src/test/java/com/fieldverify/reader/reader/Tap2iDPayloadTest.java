@@ -83,4 +83,14 @@ public class Tap2iDPayloadTest {
         assertFalse(shape.contains("Kowalski"));
         assertFalse(shape.contains("1971"));
     }
+
+    /** Same constant names as the SDK's AgeOverPossibleValues enum. */
+    private enum AgeOver { NOT_RETRIEVED, FALSE, TRUE }
+
+    @Test
+    public void mapsAgeOverEnumToBooleanOrNull() {
+        assertTrue(Tap2iDPayload.value(AgeOver.TRUE).getAsBoolean());
+        assertFalse(Tap2iDPayload.value(AgeOver.FALSE).getAsBoolean());
+        assertTrue(Tap2iDPayload.value(AgeOver.NOT_RETRIEVED).isJsonNull());
+    }
 }
