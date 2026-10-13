@@ -189,10 +189,16 @@ hardware, and any federal SSN verification service (not available for this use).
 
 ## How this was built
 
-I built FieldVerify (web app, backend and Android app) in five days for a take-home assignment. I used **Claude (Anthropic) as an AI coding agent**
-throughout: it wrote most of the code and tests and drafted these docs, working from a spec, an architecture
-document and a task list kept in this repo ([`CLAUDE.md`](CLAUDE.md), [`docs/`](docs/), [`tasks/todo.md`](tasks/todo.md)).
-I made the product and design decisions, set up the Credence and Render accounts, reviewed the work, and tested it,
-including the Android app on two phones.
-Several decisions came out of testing real behaviour, not the first plan; each is written up in
-[`docs/decisions/`](docs/decisions/) and the troubleshooting log.
+I built FieldVerify for a five-day take-home, starting with the backend so the web app and Android reader would use
+the same provider records, matching rules and audit log. The main path uses Credence's Cloud SDK in the browser; the
+Android reader uses Tap2iD. I kept credential authenticity separate from the match against an enrollment record:
+a genuine credential can still share too little information, or the details can fail to match. In those cases the
+app says what was checked and where the comparison details came from instead of calling every successful-looking
+match “verified.”
+
+I used **Claude (Anthropic) as my AI coding agent**. It wrote most of the code and tests and helped draft the
+documentation; I chose the scope and design, set up the Credence and Render accounts, reviewed the implementation,
+and tested the flows. The web screenshot of a verified mobile ID uses a simulated Credence response. The Android
+read was tested on two phones with the Multipaz test wallet, whose issuer is not trusted by this demo, so it is not
+evidence that my own wallet ID was verified. The important design choices and the issues found while testing are
+recorded in the [architecture decisions](docs/decisions/) and [troubleshooting log](docs/customer/troubleshooting.md).

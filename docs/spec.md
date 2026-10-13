@@ -189,12 +189,16 @@ Every rule outcome carries a human-readable reason string, used on the result sc
 ## 8. Acceptance (end-to-end)
 
 - [ ] Digital path works with the candidate's real wallet ID on the demo setup, three times in a row.
-- [ ] Manual path: the five scripted demo cases in `tasks/todo.md` T08 produce the expected bands.
-- [ ] Wallet cancel and SDK error both show a message and offer manual mode.
-- [ ] Audit log shows every saved verification; CSV export opens in Excel; chain check passes, and fails if a row is
-      edited by hand in SQLite.
-- [ ] No license key in the browser bundle (`grep CS- frontend/dist -r` returns nothing).
-- [ ] README has quickstart, architecture diagram, and an honest "How this was built" section (AI disclosure).
-- [ ] Customer integration guide and troubleshooting log exist (F10).
+- [x] Manual path: the five scripted demo cases in `tasks/todo.md` T08 produce the expected bands (backend tests pass).
+- [x] Wallet cancel and SDK error both show a message and offer manual mode (browser check and backend tests, recorded
+      in `tasks/todo.md` T25).
+- [x] Audit log shows saved verifications; chain checks pass and detect edits made directly in SQLite (per
+      `tasks/todo.md` T25 and `backend/tests/test_audit.py`).
+- [ ] CSV export opens in Excel (the export endpoint and tests pass; opening it in Excel remains to be checked).
+- [x] No license key or other `.env` secret appears in the browser bundle (`frontend/dist`), per the check recorded in
+      `tasks/todo.md` T25.
+- [x] README has a quickstart, architecture diagram, and honest "How this was built" section with AI disclosure.
+- [x] Customer integration guide and troubleshooting log exist (F10).
 - [ ] *If F9 shipped:* Android tap → same result screen content → row in the same audit log with `channel = android`,
-      three times in a row. If F9 didn't ship by the hard stop, no Android code is mentioned as working anywhere.
+      three times in a row. Android has been exercised with the Multipaz test wallet, but the three-consecutive-run
+      go/no-go check remains open in `tasks/todo.md` A5.
