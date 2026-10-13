@@ -47,6 +47,7 @@ audit logic.**
 | Extra repository | **JitPack** (`https://jitpack.io`), only for `com.github.Akaizz.Fetch:fetch2:3.3`; it is not on Credence's Nexus or Maven Central | Build + curl, Oct 12 |
 | Coroutines | Arrive transitively (`kotlinx-coroutines-rx2` via `c-identity-utils`); we also declare `kotlinx-coroutines-android` 1.10.2 for `Dispatchers.Main` | `c-identity-utils` POM |
 | Material 3 theme | `Theme.Material3.Light` (there is no `Theme.Material3.Light.DarkActionBar`) | Build error, Oct 12 |
+| 16 KB page size | SDK pulls `androidx.datastore` 1.2.0, whose `libdatastore_shared_counter.so` RELRO isn't 16 KB aligned (Android 16+ debug warning). `app/build.gradle` constrains `datastore-core-android` to **1.2.1** (aligned; checked with `readelf -lW`) | Oct 13 |
 | Debug APK size | ~40 MB (BouncyCastle, Guava, Room etc. come with the SDK) | Build |
 
 ## 4. Public SDK API (from the 2.0.0 artifact via `javap`)
@@ -167,6 +168,16 @@ Tap2iD result shape: status=PARTIAL_SUCCESS | doc=org.iso.18013.5.1.mDL auth=WAR
   (in `c-identity`) → the app maps TRUE/FALSE to JSON booleans, NOT_RETRIEVED to null (matched by enum name).
 - With an untrusted issuer the SDK reports `status=PARTIAL_SUCCESS` and `AuthenticationStatus.WARNING`.
 - "Transceive failed" at NFC_ENGAGEMENT = the NFC link dropped (phones moved); hold still until stages finish.
+- Seen Oct 13 after the fix: photo and "Age over 21: Yes" display. The portrait carries a **"CREDENCE ID" watermark**
+  added by the SDK (not by our code; likely the evaluation license).
+- NFC is flaky in practice: 8 of 10 attempts hit "Transceive failed". Also seen: `SEND_MDOC_REQUEST` error
+  "[CODE :216] Please provide consent to share driving license data" (holder didn't approve/enter PIN in time).
+  `VerifyActivity.friendlyError` maps Transceive failed / CODE 216 / 6A82 to plain-English messages.
+- No consent/read timeout is configurable: no timeout parameter in the public API of 2.0.0 or 2.2.0 (`javap`); the
+  limit lives inside the SDK/wallet. Workaround: NFC is only the engagement step; data moves over BLE, so the phones
+  can be separated once NFC_ENGAGEMENT completes and the holder approves (PIN 1111 + fingerprint: Multipaz test docs
+  require passphrase **and** user auth, `setUserAuthenticationRequired(true, PASSCODE|BIOMETRIC)`). QR engagement avoids
+  holding phones entirely.
 
 ## 8. Backend contract (implemented in `backend/app/routers/verify_digital.py`)
 

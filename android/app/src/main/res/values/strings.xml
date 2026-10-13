@@ -18,13 +18,16 @@
     <string name="cancel">Cancel</string>
     <string name="scan_prompt">Scan the QR code shown in the provider\'s wallet</string>
     <string name="not_mdoc_qr">That QR code isn\'t a mobile ID engagement code (it should start with \"mdoc:\").</string>
-    <string name="hold_phones_together">Hold the two phones back to back…</string>
+    <string name="hold_phones_together">Hold the two phones back to back until \"Connect by NFC\" shows ✓, then you can separate them while the provider approves.</string>
     <string name="permissions_needed">The reader needs Nearby devices (Bluetooth) access to receive the ID, and the camera for QR. Allow them in Settings to continue.</string>
     <string name="no_nfc">This phone has no NFC. Use the QR code option.</string>
     <string name="nfc_off">Turn on NFC, then try again.</string>
     <string name="reader_not_ready">The mobile ID reader isn\'t ready: %1$s</string>
     <string name="read_failed">Reading the ID failed at \"%1$s\": %2$s</string>
     <string name="checking_with_server">ID received. Checking it against the enrollment record…</string>
+    <string name="err_nfc_dropped">The phones lost contact. Hold them back to back and keep them still until all steps finish, then try again.</string>
+    <string name="err_no_consent">The provider didn\'t approve sharing in time. Tip: once \"Connect by NFC\" shows ✓ the phones can be separated (the data comes over Bluetooth), so the provider can approve with both hands. Or use the QR option.</string>
+    <string name="err_no_mobile_id">The other phone didn\'t answer as a mobile ID. Ask the provider to open the ID in their wallet app, then try again.</string>
     <string name="stage_nfc">Connect by NFC</string>
     <string name="stage_qr">Connect by QR code</string>
     <string name="stage_connection">Secure connection</string>
@@ -40,7 +43,7 @@
     <string name="portrait_hint">Photo from the credential. Compare it with the person in front of you.</string>
     <string name="match_heading">2. Does it match the enrollment record?</string>
     <string name="match_summary">Score %1$d · %2$s · %3$s</string>
-    <string name="cap_label">Capped</string>
+    <string name="cap_label">Note</string>
     <string name="source_wallet">compared using data from the mobile ID</string>
     <string name="source_id_details">compared using the printed ID details</string>
     <string name="source_none">nothing to compare yet</string>

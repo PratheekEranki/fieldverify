@@ -116,7 +116,7 @@ public class ResultActivity extends BaseActivity {
                     f.reason);
         }
         for (String cap : result.match.caps) {
-            addRow(fields, getString(R.string.cap_label), cap, null);
+            addRow(fields, getString(R.string.cap_label), "", cap);
         }
 
         // Age-check completion and save

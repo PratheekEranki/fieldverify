@@ -257,7 +257,22 @@ public class VerifyActivity extends BaseActivity implements Tap2iDVerifier.ReadC
         renderStages();
         app.verifier().cancel();
         endReading();
-        showError(getString(R.string.read_failed, stageLabel(stage), message));
+        showError(friendlyError(stage, message));
+    }
+
+    /** Plain-English versions of the SDK errors seen in testing (docs/android/CONTEXT.md §7); raw text otherwise. */
+    private String friendlyError(VerificationStage stage, String message) {
+        String m = message == null ? "" : message;
+        if (m.contains("Transceive failed")) {
+            return getString(R.string.err_nfc_dropped);
+        }
+        if (m.contains("CODE :216") || m.toLowerCase(java.util.Locale.US).contains("provide consent")) {
+            return getString(R.string.err_no_consent);
+        }
+        if (m.contains("6A82")) {
+            return getString(R.string.err_no_mobile_id);
+        }
+        return getString(R.string.read_failed, stageLabel(stage), m);
     }
 
     @Override
