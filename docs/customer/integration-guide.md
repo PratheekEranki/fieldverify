@@ -11,7 +11,8 @@ Known problems and fixes: [troubleshooting.md](troubleshooting.md).
 | Web app (React) | Auditor's laptop or tablet browser | FieldVerify backend only |
 | Backend (FastAPI) | Your server or cloud host, behind HTTPS | Credence Cloud SDK API, your enrollment data |
 | Credence ID Cloud SDK | Credence | Provider's phone wallet, FieldVerify backend |
-| Phone wallet | Provider's phone | Credence (encrypted presentation) |
+| Phone wallet | Provider's phone | Credence (encrypted presentation), or the Android reader in person |
+| Android reader (optional) | Auditor's Android 10+ phone with NFC + Bluetooth | Provider's wallet (NFC/QR, then Bluetooth); FieldVerify backend (device token) |
 
 The Credence license key lives only on the backend. Browsers never see it.
 
@@ -27,7 +28,10 @@ The Credence license key lives only on the backend. Browsers never see it.
    Put its ID in `CREDENCE_PROFILE_ID`. To confirm what a profile requests, see troubleshooting.md.
    FieldVerify also works with the default Age Check profile: auditors confirm the photo and complete the match
    from the physical license (results are labelled accordingly).
-4. **Trust list (decides which issuers are accepted).** Trust Management → Public IACA lists the issuing authorities
+4. **Tap2iD license (Android reader only).** License Management → Generate License → In-person (Android) → package
+   `com.fieldverify.reader` (or your own applicationId). The key goes in the app's `local.properties`, not on the
+   server. The license also carries a profile; the evaluation one is "Age Check Profile 2.0" (issuer, photo, age only).
+5. **Trust list (decides which issuers are accepted).** Trust Management → Public IACA lists the issuing authorities
    (state DMVs, Google ID pass, Samsung) your account trusts. This is a **policy decision**: e.g. accept only your own
    state plus ID pass. An ID from an issuer that isn't enabled fails the issuer check even if it is genuine.
    FieldVerify records the issuer on every audit entry.
@@ -49,6 +53,7 @@ Any host that runs Python 3.11+ and Node 20+ and serves HTTPS. The reference dep
 | `SERVE_FRONTEND` | `true` (one origin for the app and the API) |
 | `DATABASE_URL` | defaults to SQLite; use a managed database in production |
 | `DEMO_RESET_TOKEN` | leave **unset** in production (the reset route then doesn't exist) |
+| `ANDROID_DEVICE_TOKEN` | only if you use the Android reader: shared secret the app sends (secret). Prototype only; use Play Integrity or mTLS in production |
 
 Check: `GET /api/health` → `credence_configured: true`, and `GET /api/credence/status` → `{"ok": true, "profile": ...}`.
 
@@ -72,6 +77,11 @@ MMIS or provider-enrollment system:
 | **License barcode scan** | A camera (tablet or phone); decoding happens on the device |
 
 Firefox and in-app web views can't use the Digital Credentials API; the QR path still works there.
+
+**Android reader:** Android 10+ with NFC and Bluetooth. On the provider's phone, other NFC apps (wallets, social
+"tap to share") can grab the tap; see troubleshooting.md. Build and install steps: `android/README.md`. The optional
+second read for name/DOB (ADR-0008) is a stopgap until the Tap2iD profile includes those fields; its matches are
+capped at yellow.
 
 ## 6. Before the first field day
 

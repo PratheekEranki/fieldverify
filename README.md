@@ -1,12 +1,14 @@
 # FieldVerify
 
-**Provider identity verification for Medicaid site visits, built on the Credence ID Cloud SDK.**
+**Provider identity verification for Medicaid site visits, built on the Credence ID Cloud SDK (web) and Tap2iD SDK
+(Android).**
 
 State Medicaid agencies must visit moderate- and high-risk providers before and after enrollment, and every enrolled
 provider must allow unannounced inspections ([42 CFR 455.432](https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-C/part-455/subpart-E/section-455.432)).
 At the door, an auditor needs to answer one question: *is the person in front of me the enrolled provider?*
 
-FieldVerify answers it on a laptop or tablet browser and leaves an audit record the agency can rely on:
+FieldVerify answers it on a laptop or tablet browser, or on an Android phone, and leaves an audit record the agency
+can rely on:
 
 - **Mobile ID (primary).** The provider shares the ID in their phone wallet. Credence ID verifies it
   cryptographically: issuer in the trust list, signatures valid, not expired. FieldVerify then matches the shared
@@ -14,6 +16,10 @@ FieldVerify answers it on a laptop or tablet browser and leaves an audit record 
 - **Manual fallback.** No wallet ID, dead phone? The auditor scans the PDF417 barcode on the back of the physical
   license (or types the details), confirms the photo, and gets a scored **record match**, clearly labelled as *not*
   cryptographically verified.
+- **Android reader (in person).** The auditor's phone reads the provider's mobile ID over NFC or QR with Credence's
+  Tap2iD SDK and sends the result to the same backend. When the Credence profile shares no name or date of birth,
+  an optional second read with an open-source reader can fetch them; that match is labelled as not checked by
+  Credence and capped at yellow. See [Android reader](#android-reader).
 - **Tamper-evident audit log.** Every outcome is chained with SHA-256. Editing or deleting any row is detected.
   Exportable to CSV.
 
@@ -73,10 +79,15 @@ flowchart LR
     API --> CC["Credence client\n(key + tokens server-side)"]
     API --> DB[("Enrollment records\nSQLite, synthetic")]
   end
+  subgraph Phone["Auditor Android phone"]
+    AND["FieldVerify Reader\n(Tap2iD SDK)"]
+  end
   UI --> API
   UI -. "QR code / Digital Credentials API" .-> W
   W -- "encrypted presentation" --> CR["Credence ID Cloud SDK"]
   CC --> CR
+  AND -. "NFC / QR, then Bluetooth" .-> W
+  AND -- "check results + claims\n(device token)" --> API
 ```
 
 - The **Credence license key never reaches the browser**. The backend owns it and the token lifecycle; the browser
@@ -86,6 +97,36 @@ flowchart LR
 - Three wallet paths are wired: **QR / deep link** (OpenID4VP, any phone wallet), **Google Wallet** and **Apple
   Wallet** via the browser's Digital Credentials API.
 - More: [`docs/architecture.md`](docs/architecture.md), decisions in [`docs/decisions/`](docs/decisions/).
+
+## Android reader
+
+`android/` is a second front end on the same backend ([ADR-0006](docs/decisions/0006-one-backend-two-front-ends.md)).
+Java, plus two thin Kotlin files for the SDKs' coroutine APIs.
+
+1. **Today's visits** come from the backend. The top bar shows whether the Tap2iD license check passed and which
+   Credence profile it runs on.
+2. **Read the ID in person**: tap phones (NFC) or scan the wallet's QR code. Data moves over Bluetooth, so the phones
+   can be separated once "Connect by NFC" is ticked and the provider approves on their phone.
+3. **The phone sends Tap2iD's raw checks**, not a verdict: issuer signature, device signature, digests, trust chain,
+   validity, errors. The backend recomputes "genuine" from those, scores any shared name/DOB and returns the result.
+   The phone authenticates with a shared device token (a prototype stand-in for Play Integrity or mTLS).
+4. **Result screen**: genuine or not, the credential photo (to compare with the person), "Age over 21", the record
+   match, then **Save to audit log** (channel `android`).
+
+**Second read for name and date of birth** ([ADR-0008](docs/decisions/0008-android-second-read.md)). The Tap2iD
+license runs on Credence's Age Check profile, which shares the issuer, photo and age only. The result screen can run
+a second, separate read with the open-source [Multipaz](https://github.com/openwallet-foundation/multipaz) reader
+(OpenWallet Foundation) to request name and DOB. The backend only accepts those details if the second read's own
+signature, digest and validity checks pass and the issuer matches the first read. Tap2iD still decides "genuine",
+and a second-read match is capped at yellow, because nothing proves both reads came from the same phone. The proper
+fix is a Credence profile that includes name and DOB in the Tap2iD read.
+
+**Tested on two phones** with the Multipaz Test App as the wallet (a synthetic "Erika Mustermann" license from a test
+issuer). Its issuer isn't in Credence's trust list, so the overall result is correctly red. The second read scored
+100 (green) against the matching record and 73 (yellow) against a misspelled one.
+
+Setup and the verified SDK details: [`android/README.md`](android/README.md),
+[`docs/android/CONTEXT.md`](docs/android/CONTEXT.md).
 
 ## Privacy and security choices
 
@@ -97,6 +138,8 @@ flowchart LR
   in memory for the result screen only.
 - **License barcode:** decoded entirely on the device; the license number is never read.
 - **Provider lookup** (unannounced visits) searches by NPI or name only. You can't find a person by their SSN or DOB.
+- **Android:** the Tap2iD key and device token live in `local.properties` (gitignored) and are built into the debug
+  APK, so the APK is not shared. Logs record field names and types, never values.
 
 ## Quickstart (Windows / PowerShell)
 
@@ -117,8 +160,9 @@ npm install
 npm run dev                                    # http://localhost:5173
 ```
 
-Tests: `cd backend; pytest -q` (81 tests) and `cd frontend; npm test` (15 tests, including a PDF417 encode → decode
-round trip).
+Tests: `cd backend; pytest -q` (112 tests), `cd frontend; npm test` (15 tests, including a PDF417 encode → decode
+round trip) and `cd android; .\gradlew.bat :app:testDebugUnitTest` (4 tests, built from the Tap2iD SDK's own model
+classes). Android setup: [`android/README.md`](android/README.md).
 
 Try the manual fallback on the 9:00 visit (Robert Kowalski): DOB `1971-04-12`, SSN `900-11-2233`, first name
 `Bob`. Then swap the DOB to `1971-12-04` and watch it drop to yellow with the reason.
@@ -133,6 +177,7 @@ Try the manual fallback on the 9:00 visit (Robert Kowalski): DOB `1971-04-12`, S
 | `DEMO_PROVIDER_FIRST/LAST/DOB` | Seeds one provider matching *your own* wallet ID, so a live demo can verify green |
 | `DEMO_RESET_TOKEN` | Enables `POST /api/demo/reset` (clears the audit log before a demo). Unset = route doesn't exist |
 | `SERVE_FRONTEND` | `true` on Render: FastAPI serves the built web app from the same origin |
+| `ANDROID_DEVICE_TOKEN` | Shared secret the Android app sends as `X-Device-Token`. Unset = the Android endpoints return 503 |
 
 Deploying for an agency, profiles, trust lists and known issues: [`docs/customer/integration-guide.md`](docs/customer/integration-guide.md)
 and [`docs/customer/troubleshooting.md`](docs/customer/troubleshooting.md).
@@ -144,9 +189,10 @@ hardware, and any federal SSN verification service (not available for this use).
 
 ## How this was built
 
-I built FieldVerify in five days for a take-home assignment. I used **Claude (Anthropic) as an AI coding agent**
+I built FieldVerify (web app, backend and Android app) in five days for a take-home assignment. I used **Claude (Anthropic) as an AI coding agent**
 throughout: it wrote most of the code and tests and drafted these docs, working from a spec, an architecture
 document and a task list kept in this repo ([`CLAUDE.md`](CLAUDE.md), [`docs/`](docs/), [`tasks/todo.md`](tasks/todo.md)).
-I made the product and design decisions, set up the Credence and Render accounts, reviewed the work, and tested it.
+I made the product and design decisions, set up the Credence and Render accounts, reviewed the work, and tested it,
+including the Android app on two phones.
 Several decisions came out of testing real behaviour, not the first plan; each is written up in
 [`docs/decisions/`](docs/decisions/) and the troubleshooting log.

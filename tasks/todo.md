@@ -99,7 +99,7 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
 
 ## Phase 2 — Digital web path (Sat Oct 10)
 
-- [ ] **T13 🧑 Spike: which Cloud SDK flow works with the real wallet ID** (M) — depends T12b
+- [~] **T13 🧑 Spike: which Cloud SDK flow works with the real wallet ID** — superseded Oct 12: flows A/B/C wired and live (setup + sessions work); only Age Check Profile 2.0 is available (ADR-0007). No real wallet presentation yet: the candidate's wallet lacks an ID the profile accepts (troubleshooting.md). (M) — depends T12b
   - **First:** the only profile on our Cloud license is the portal default "Age Check Profile 2.0", which probably
     requests age-over-N only. Find where profiles are managed in the portal (likely "Custom Verification") and create
     a profile requesting given name, family name, birth date (+ portrait if offered); put its ID in
@@ -109,7 +109,7 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
     **redacted** raw result to `backend/tests/fixtures/<flow>_result.json`.
   - Acceptance: (1) ADR-0005 filled in; (2) fixture saved; (3) architecture §9 #1, #4, #5 answered.
 
-- [ ] **A1 🧑 Tap2iD wallet-read test** (S, 1 hour max) — human, Saturday, independent of T13
+- [x] **A1 🧑 Tap2iD wallet-read test** — done differently Oct 13: our own app (not the sample) read the Multipaz test wallet over NFC; see `docs/android/CONTEXT.md` §7. (S)
   - Use `TAP2ID_SAMPLE_APP_KEY` from `.env` (already generated for the sample's package `com.credenceid.phoneverifier`).
   - Build and install Credence's Tap2iD Android sample app (evaluation use only; we do not copy its code) on an
     Android phone (Android 10+, NFC). Tap the wallet ID.
@@ -126,7 +126,7 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
   - Acceptance: (1) fixture test → `authenticity.status == "verified"` + a score; (2) cancelled/denied fixture → clean
     error code, not a 500.
 
-- [ ] **T16 🧑 Web wallet flow** — UI built and browser-checked with stubbed Credence responses (QR panel, polling, result with portrait). Remaining: real wallet test. (M) — depends T15
+- [~] **T16 🧑 Web wallet flow** — UI built and browser-checked with stubbed Credence responses (QR panel, polling, result with portrait). **Open: no real wallet test** (no accepted wallet ID available); pitch must not claim a real web wallet verification. (M) — depends T15
   - `wallet/dcapi.ts` or `QrPanel` + `polling.ts`, depending on the flow. Human presents the real wallet ID.
   - Acceptance: (1) real wallet → green "Verified: cryptographic + record match", 3× in a row.
 
@@ -141,7 +141,7 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
 
 ## Phase 3 — Hosting, P1 features, polish → web FEATURE FREEZE (Sun Oct 11 – Mon Oct 12)
 
-- [ ] **T18 Full app on Render** (M) — depends T16
+- [x] **T18 Full app on Render** — done: live at https://fieldverify-avyq.onrender.com (web app + API, `SERVE_FRONTEND=true`); Oct 13 check: all 18 API paths present, no `CS-` or `.env` secret in the built bundle. (M)
   - FastAPI serves `frontend/dist` when `SERVE_FRONTEND=true`; Render build command builds the frontend then installs
     the backend; secrets set as Render environment variables (never in the repo).
   - Acceptance: (1) full demo (spec §1) on the HTTPS URL; (2) `grep -r "CS-" frontend/dist` is empty.
@@ -152,7 +152,7 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
   - Acceptance: (1) scanning the candidate's own license fills name, DOB, address; (2) the scan never leaves the browser
     except as the normal manual-verify request.
 
-- [ ] **T20 Portrait on result** (S) — only if T13 showed the portrait claim is available
+- [x] **T20 Portrait on result** — web: shows when the wallet shares it (browser-checked, stubbed); Android: real portrait shown Oct 13 (SDK Bitmap → JPEG). Not stored in DB, CSV or logs. (S)
   - Acceptance: (1) portrait shows for digital results; (2) not in DB, CSV, or logs.
 
 - [x] **T21 Customer integration guide** (M) — `docs/customer/integration-guide.md` + `troubleshooting.md` (Oct 12)
@@ -161,7 +161,7 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
 
 **Checkpoint C (Sun night)**: T18 done, full demo runs on the HTTPS URL.
 
-- [ ] **T22 UI polish** (M): loading/empty states, spacing, icon + text with every color, tablet check.
+- [x] **T22 UI polish** — done across Oct 11–12 (loading/empty states, icon + text with every colour, 768 px check); Android edge-to-edge fix Oct 12.
 
 - [x] **T23 README** (M) — rewritten Oct 12 with screenshots; "How this was built" needs the candidate's review: headline, what it does, screenshots, architecture diagram, quickstart (PowerShell), env table,
   security decisions, out of scope, **How this was built** (AI tools used and for what; honest).
@@ -196,7 +196,17 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
 
 ## Phase 5 — Deliverables (Wed Oct 14 – Thu Oct 15)
 
-- [ ] **T25 Final verification** (S): walk `spec.md` §8 line by line; fix or document every miss. Bug fixes only.
+- [x] **T25 Final verification** (Oct 13 12:30) against `spec.md` §8:
+  - ✗ **Digital path with the candidate's real wallet ID, 3×**: not met (no wallet ID the profile accepts). Web
+    digital path is browser-tested with stubbed Credence only; Android is device-tested with the Multipaz test wallet.
+  - ✓ Manual: five scripted cases (`test_api_manual.py`), all pass.
+  - ✓ Wallet cancel / Credence error → message + manual fallback (browser check Oct 11; backend tests).
+  - ✓ Audit log, CSV export, chain check + tamper/upgrade/delete detection (`test_audit.py`). 🧑 Open the CSV in Excel once.
+  - ✓ No license key or `.env` secret in `frontend/dist`.
+  - ✓ README: quickstart, diagram, AI disclosure (🧑 review "How this was built" in your own words).
+  - ✓ Integration guide + troubleshooting (Android added Oct 13).
+  - ◐ Android: tap → result → audit row with `channel = android` works (entries #1, #3 on Render); 🧑 three in a row = A5.
+  - Tests: backend 112, frontend 15, Android 4; ruff clean; secret scan clean.
 - [ ] 🧑 Deck, in own words (drafting from Sunday; finish Wednesday)
 - [ ] 🧑 Video ≤ 5 min, on camera for part of it, shows the app working; check it opens without login (Wed)
 - [ ] 🧑 Email bella@credenceid.com, subject `Solution Engineer Assignment - Pratheek Eranki`, with deck, video link,

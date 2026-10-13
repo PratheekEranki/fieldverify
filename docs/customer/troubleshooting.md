@@ -72,3 +72,22 @@ IT team would need them: **symptom → cause → fix**. Newest first.
 - **Try:** open the ID in the wallet before tapping and keep the screen unlocked; hold back-to-back for 2–3 s; use the
   QR option if the wallet can show an engagement QR; confirm which wallet and ID type is on the phone.
 
+## Android reader: "NFC service conflict" on the provider's phone (Oct 13)
+
+- **Seen:** Samsung notification on the wallet phone listing several NFC services (Embedded tag, the wallet app,
+  X "share profile"). Reads failed intermittently.
+- **Fix:** Settings → Connections → NFC and contactless payments → Other NFC services: leave only the wallet app on.
+  Payments are a separate setting and aren't affected.
+
+## Android reader: "Transceive failed" / "phones lost contact" (Oct 13)
+
+- **Seen:** most NFC attempts in testing; NFC contact dropped mid-handshake.
+- **Fix:** hold the phones back to back, still, until "Connect by NFC" is ticked; then they can be separated (data
+  moves over Bluetooth). The second read retries automatically up to 5 taps. The QR option avoids NFC entirely.
+
+## Android reader: "[CODE :216] Please provide consent" (Oct 13)
+
+- **Seen:** the provider didn't approve in time (test wallet asks for PIN 1111 and a fingerprint).
+- **Fix:** separate the phones after the NFC tick and approve with both hands; the time limit is inside the SDK and
+  wallet and can't be changed from the app.
+
