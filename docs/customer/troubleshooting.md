@@ -91,3 +91,11 @@ IT team would need them: **symptom → cause → fix**. Newest first.
 - **Fix:** separate the phones after the NFC tick and approve with both hands; the time limit is inside the SDK and
   wallet and can't be changed from the app.
 
+## Android reader: install fails with "Can't find service: package" / INSTALL_FAILED_NO_MATCHING_ABIS (Oct 14)
+
+- **Cause:** Android Studio's Run builds only for the selected device. A Run aimed at the emulator produced an
+  x86_64-only APK in `build/intermediates`, which the arm64 Pixel rejects.
+- **Fix:** close the emulator and pick the phone before Run, or build from the terminal
+  (`.\gradlew.bat :app:assembleDebug`, all ABIs) and install `build/outputs/apk/debug/app-debug.apk` with
+  `adb -s <serial> install -r`. Decline Android Studio's AGP 9 upgrade prompt; the app is tested on AGP 8.13.2 / Gradle 8.14.3.
+

@@ -189,7 +189,7 @@ Sizes: S ≈ < 1 h, M ≈ 1–3 h. Split anything bigger.
   `POST /api/verify/digital/second-read` (+10 tests, 112 total), web labels. Builds; **not yet run on phones**.
 - [x] **A6 🧑 Second read works on phones** — Oct 13: Erica Musterman → 73 yellow and Erika Mustermann →
   100 green match via second read (NFC); overall red (untrusted test issuer) both times. Still to try: QR variant, a save.
-- [ ] **A5 🧑 Go/no-go** (S): three clean end-to-end runs before 8:00 PM CT. Pass → include in README and demo.
+- [x] **A5 🧑 Go/no-go** — PASSED Oct 14 21:41–21:43 CT: three consecutive end-to-end runs (Tap2iD read + second read via QR/BLE + save) on Pixel 9 (Android 17) ↔ Samsung/Multipaz; audit #2 Erika 100 green, #3 Kevin O'Brien 0 red (wrong person caught), #4 Erika 100 green; overall red each time (untrusted test issuer). NFC tap flaky on these phones ("Transceive failed" / "Tag was lost"), QR reliable → record the demo with QR.
   Fail → remove from README and demo; it's a "phase 2" slide.
 
 ---
